@@ -16,5 +16,5 @@ build/
 .cache/
 
 # Logs
-logs/
-src/logs/*.log
+#logs/
+#src/logs/*.log
