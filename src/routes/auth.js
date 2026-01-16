@@ -5,7 +5,7 @@ const fs = require("fs");
 const path = require("path");
 
 router.post("/login", (req, res) => {
-   console.log("LOGIN CHAMADO", req.body);
+   console.log("BODY RECEBIDO:", req.body);
   const { usuario, senha, linkedin } = req.body || {};
 
   // 1️⃣ validação de campos
