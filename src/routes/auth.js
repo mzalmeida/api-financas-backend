@@ -1,51 +1,33 @@
-const express = require("express");
+const express = require('express');
+const cors = require('cors');
+
 const router = express.Router();
-const jwt = require("jsonwebtoken");
-const fs = require("fs");
-const path = require("path");
 
-router.post("/login", (req, res) => {
-   console.log("BODY RECEBIDO:", req.body);
-  const { usuario, senha, linkedin } = req.body || {};
+// 🔥 CORS ESPECÍFICO PARA AUTH (RESOLVE O PREFLIGHT)
+router.use(cors({
+  origin: [
+    'https://api-financas-frontend.onrender.com',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500'
+  ],
+  methods: ['POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-  // 1️⃣ validação de campos
-  if (!usuario || !senha || !linkedin) {
-    return res.status(400).json({
-      erro: "Usuário, senha e LinkedIn são obrigatórios"
-    });
+// 🔥 RESPONDE EXPLICITAMENTE O PREFLIGHT
+router.options('/login', (req, res) => {
+  res.sendStatus(200);
+});
+
+// 👉 SUA ROTA REAL
+router.post('/login', async (req, res) => {
+  try {
+    // seu código de login aqui
+    res.json({ message: 'Login OK' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro no login' });
   }
-
-  // 2️⃣ login fixo (demo)
-  if (usuario !== "testem" || senha !== "mteste") {
-    return res.status(401).json({
-      erro: "Senha inválida"
-    });
-  }
-
-  // 3️⃣ gera token
-  const token = jwt.sign(
-    { usuario, linkedin },
-    process.env.JWT_SECRET,
-    { expiresIn: "1h" }
-  );
-
-  // 4️⃣ REGISTRA LOG DE ACESSO
-  const log = {
-    usuario,
-    linkedin,
-    ip: req.ip,
-    data: new Date().toISOString()
-  };
-
-  const logPath = path.join(__dirname, "../../logs/acessos.log");
-
-  fs.appendFileSync(logPath, JSON.stringify(log) + "\n");
-
-  // 5️⃣ resposta
-  res.json({
-    status: "ok",
-    token
-  });
 });
 
 module.exports = router;
