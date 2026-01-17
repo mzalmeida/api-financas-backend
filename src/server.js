@@ -6,25 +6,7 @@ const gastosRoutes = require("./routes/gastos");
 
 const app = express();
 
-app.use(cors({
-  origin: function (origin, callback) {
-    const allowedOrigins = [
-      process.env.FRONTEND_URL,
-      "http://localhost:8080",
-      "http://127.0.0.1:8080"
-    ];
-
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use(cors());
 
 /* 🔥 corrige o erro no navegador de 
 Response to preflight request doesn't pass access control check
