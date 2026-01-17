@@ -18,6 +18,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+/* 🔥 corrige o erro no navegador de 
+Response to preflight request doesn't pass access control check
+No 'Access-Control-Allow-Origin' header is present*/
+app.options('*', cors());
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
