@@ -1,17 +1,17 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+
 const authRoutes = require("./routes/auth");
 const gastosRoutes = require("./routes/gastos");
 
 const app = express();
 
+/**
+ * 🔓 CORS ABERTO PARA DEMO PÚBLICA
+ * (necessário para frontend no Render)
+ */
 app.use(cors());
-
-/* 🔥 corrige o erro no navegador de 
-Response to preflight request doesn't pass access control check
-No 'Access-Control-Allow-Origin' header is present*/
-app.options('*', cors());
 
 app.use(express.json());
 
@@ -29,9 +29,8 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.use(authRoutes);
-
-// rotas protegidas
+// rotas
+app.use("/auth", authRoutes);
 app.use(gastosRoutes);
 
 app.listen(process.env.PORT || 3000, () => {
