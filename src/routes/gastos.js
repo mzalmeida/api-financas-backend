@@ -1,4 +1,5 @@
 const express = require("express");
+console.log("🚀 ROTAS DE GASTOS CARREGADAS");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const { createClient } = require("@supabase/supabase-js");
