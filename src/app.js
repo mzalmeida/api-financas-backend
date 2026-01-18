@@ -1,9 +1,10 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 
 const healthRoutes = require('./routes/health');
 const authRoutes = require('./routes/auth');
-const gastosRoutes = require('./routes/gastos'); // se existir
+const gastosRoutes = require(path.join(__dirname, 'routes', 'gastos'));
 
 const app = express();
 
