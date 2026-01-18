@@ -21,7 +21,7 @@ app.use(cors({
 
 /* 🔥 corrige o erro no navegador de 
 Response to preflight request doesn't pass access control check
-No 'Access-Control-Allow-Origin' header is present*/
+No 'Access-Control-Allow-Origin' header is present
 app.options('*', cors({
   origin: [
     'https://api-financas-frontend.onrender.com',
@@ -30,6 +30,7 @@ app.options('*', cors({
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+*/
 
 app.use(express.json());
 
