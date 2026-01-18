@@ -38,6 +38,6 @@ app.get('/', (req, res) => {
 
 app.use('/health', healthRoutes);
 app.use('/auth', authRoutes);
-app.use('/gastos_banco', gastosRoutes); // ajuste se o nome for outro
+app.use('/gastos', gastosRoutes); 
 
 module.exports = app;
