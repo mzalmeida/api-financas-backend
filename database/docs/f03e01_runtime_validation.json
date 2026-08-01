@@ -1,0 +1,665 @@
+{
+  "generated_at": "2026-08-01T23:27:33.145Z",
+  "synthetic_users": [
+    {
+      "code": "A",
+      "email_masked": "f03e01-user-a+masked@example.invalid",
+      "auth_user_id_masked": "6e28c34a...",
+      "public_user_id_masked": "32ddd2e0..."
+    },
+    {
+      "code": "B",
+      "email_masked": "f03e01-user-b+masked@example.invalid",
+      "auth_user_id_masked": "20057224...",
+      "public_user_id_masked": "6142f61b..."
+    }
+  ],
+  "login_valid": {
+    "ok": true,
+    "status": 200,
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "1203",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sat, 01 Aug 2026 23:27:48 GMT",
+      "etag": "W/\"4b3-CwsKtBxB6g+eh4FKbelqSlMJUGg\"",
+      "keep-alive": "timeout=5",
+      "vary": "Origin",
+      "x-powered-by": "Express"
+    },
+    "data": {
+      "status": "ok",
+      "auth_provider": "supabase",
+      "session": {
+        "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjI4YzYwNWNjLWUzMTUtNDM2Ny04ZTk3LWI2ZjgyZWMwYWIxYyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2dibnphY2RzeHNpdnd3c3F1eGt5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2ZTI4YzM0YS0xMDVlLTRkMjAtYTUwMi1mYzcxNDViNGVkNGUiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg1NjMwMzg5LCJpYXQiOjE3ODU2MjY3ODksImVtYWlsIjoiZjAzZTAxLXVzZXItYUBleGFtcGxlLmludmFsaWQiLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImNvZGUiOiJBIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1hcmtlciI6IkYwM0UwMSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzg1NjI2Nzg5fV0sInNlc3Npb25faWQiOiI3ZGRlYzdjNy1mMzI2LTQ1ZjItOWE1Ni05YmJjYWRmYWNmMDMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.9pmtzoL4veASs7tH98z5luXYhUsLoX7shiNPnBeHrGI3-hzpmzQtEl9g7RYSkWt7GIf3rbT-rDUmYSN3J4HrPg",
+        "refresh_token": "vwtwrbcqwrtm",
+        "expires_in": 3600,
+        "expires_at": 1785630389,
+        "token_type": "bearer",
+        "user": {
+          "id": "6e28c34a-105e-4d20-a502-fc7145b4ed4e",
+          "email": "f03e01-user-a@example.invalid"
+        }
+      },
+      "user": {
+        "id": "6e28c34a-105e-4d20-a502-fc7145b4ed4e",
+        "email": "f03e01-user-a@example.invalid"
+      }
+    }
+  },
+  "login_invalid": {
+    "ok": false,
+    "status": 401,
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "63",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sat, 01 Aug 2026 23:27:49 GMT",
+      "etag": "W/\"3f-6DfCosKp7kzFPk7eAFucz3b/8kc\"",
+      "keep-alive": "timeout=5",
+      "vary": "Origin",
+      "x-powered-by": "Express"
+    },
+    "data": {
+      "erro": "Credenciais invalidas",
+      "codigo": "invalid_credentials"
+    }
+  },
+  "refresh_session": {
+    "ok": true,
+    "status": 200,
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "1176",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sat, 01 Aug 2026 23:27:49 GMT",
+      "etag": "W/\"498-mIDGTjTbqa9dV3oOKCyv8Sdu4W8\"",
+      "keep-alive": "timeout=5",
+      "vary": "Origin",
+      "x-powered-by": "Express"
+    },
+    "data": {
+      "status": "ok",
+      "session": {
+        "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjI4YzYwNWNjLWUzMTUtNDM2Ny04ZTk3LWI2ZjgyZWMwYWIxYyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2dibnphY2RzeHNpdnd3c3F1eGt5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2ZTI4YzM0YS0xMDVlLTRkMjAtYTUwMi1mYzcxNDViNGVkNGUiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg1NjMwMzkxLCJpYXQiOjE3ODU2MjY3OTEsImVtYWlsIjoiZjAzZTAxLXVzZXItYUBleGFtcGxlLmludmFsaWQiLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImNvZGUiOiJBIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1hcmtlciI6IkYwM0UwMSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzg1NjI2Nzg5fV0sInNlc3Npb25faWQiOiI3ZGRlYzdjNy1mMzI2LTQ1ZjItOWE1Ni05YmJjYWRmYWNmMDMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.2Zu_GXmE-CYv176IhPKnWuaQZ1DBBVaK-wW2yJqANfYZEFDmoCmf3ztpS_8vrUJoW7rY29Qb_AZLzmIKOsZ9dg",
+        "refresh_token": "2qqwunhinf4w",
+        "expires_in": 3600,
+        "expires_at": 1785630391,
+        "token_type": "bearer",
+        "user": {
+          "id": "6e28c34a-105e-4d20-a502-fc7145b4ed4e",
+          "email": "f03e01-user-a@example.invalid"
+        }
+      },
+      "user": {
+        "id": "6e28c34a-105e-4d20-a502-fc7145b4ed4e",
+        "email": "f03e01-user-a@example.invalid"
+      }
+    }
+  },
+  "logout": {
+    "ok": true,
+    "status": 200,
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "15",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sat, 01 Aug 2026 23:27:56 GMT",
+      "etag": "W/\"f-VaSQ4oDUiZblZNAEkkN+sX+q3Sg\"",
+      "keep-alive": "timeout=5",
+      "vary": "Origin",
+      "x-powered-by": "Express"
+    },
+    "data": {
+      "status": "ok"
+    }
+  },
+  "restore_session": {
+    "ok": true,
+    "status": 200,
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "264",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sat, 01 Aug 2026 23:27:49 GMT",
+      "etag": "W/\"108-Zi9w8sl7OYMOMwrYyL98/s/a9gA\"",
+      "keep-alive": "timeout=5",
+      "vary": "Origin",
+      "x-powered-by": "Express"
+    },
+    "data": {
+      "status": "ok",
+      "user": {
+        "authUserId": "6e28c34a-105e-4d20-a502-fc7145b4ed4e",
+        "email": "f03e01-user-a@example.invalid",
+        "role": "authenticated",
+        "appMetadata": {
+          "provider": "email",
+          "providers": [
+            "email"
+          ]
+        },
+        "userMetadata": {
+          "code": "A",
+          "email_verified": true,
+          "marker": "F03E01"
+        }
+      }
+    }
+  },
+  "token_absent": {
+    "ok": false,
+    "status": 401,
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "55",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sat, 01 Aug 2026 23:27:49 GMT",
+      "etag": "W/\"37-8cNePYNsqGUuK+GiByya5Ig6eFw\"",
+      "keep-alive": "timeout=5",
+      "vary": "Origin",
+      "x-powered-by": "Express"
+    },
+    "data": {
+      "erro": "Token nao informado",
+      "codigo": "missing_token"
+    }
+  },
+  "token_malformed": {
+    "ok": false,
+    "status": 401,
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "50",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sat, 01 Aug 2026 23:27:50 GMT",
+      "etag": "W/\"32-WeKMdDNSviXfOMqpqRSN5r/t8jo\"",
+      "keep-alive": "timeout=5",
+      "vary": "Origin",
+      "x-powered-by": "Express"
+    },
+    "data": {
+      "erro": "Token invalido",
+      "codigo": "invalid_token"
+    }
+  },
+  "token_expired": {
+    "ok": false,
+    "status": 401,
+    "headers": {
+      "connection": "keep-alive",
+      "content-length": "50",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sat, 01 Aug 2026 23:27:50 GMT",
+      "etag": "W/\"32-+XK7NWpnP05eMXa3bDSTEXW7lbM\"",
+      "keep-alive": "timeout=5",
+      "vary": "Origin",
+      "x-powered-by": "Express"
+    },
+    "data": {
+      "erro": "Token expirado",
+      "codigo": "expired_token"
+    }
+  },
+  "health": {
+    "root": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "32",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:47 GMT",
+        "etag": "W/\"20-DeFaMSzvhdGjpnAXP9sRxeeJhS4\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "API Financas online"
+      }
+    },
+    "official": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "121",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:47 GMT",
+        "etag": "W/\"79-xUKGCC0AfBzMrj6d/bjrATmmAM4\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "service": "api-financas",
+        "timestamp": "2026-08-01T23:27:47.372Z",
+        "version": "1.0.0",
+        "supabase": "configured"
+      }
+    },
+    "legacy": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "121",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:47 GMT",
+        "etag": "W/\"79-O6Bjqck2lnpczIl0yK301KR0vBU\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "service": "api-financas",
+        "timestamp": "2026-08-01T23:27:47.374Z",
+        "version": "1.0.0",
+        "supabase": "configured"
+      }
+    }
+  },
+  "cors": {
+    "allowed": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "access-control-allow-origin": "http://localhost:8080",
+        "connection": "keep-alive",
+        "content-length": "121",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:47 GMT",
+        "etag": "W/\"79-UFO52z8EkQClL0oSmyvLdIzzKPk\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "service": "api-financas",
+        "timestamp": "2026-08-01T23:27:47.375Z",
+        "version": "1.0.0",
+        "supabase": "configured"
+      }
+    },
+    "blocked": {
+      "ok": false,
+      "status": 403,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "59",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:47 GMT",
+        "etag": "W/\"3b-dUCNSteLZnp+PYOJ4ES7jSV0wL0\"",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "erro": "Origem nao permitida",
+        "codigo": "cors_not_allowed"
+      }
+    }
+  },
+  "user_a": {
+    "banco": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "216",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:51 GMT",
+        "etag": "W/\"d8-80wfl6PHxvyBvbIYHeMGZy9SosE\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "user_id": "32ddd2e0-bed1-42e4-911b-c9033ee691eb",
+            "banco": "Nubank",
+            "total_gasto": 15,
+            "quantidade_transacoes": 2,
+            "periodo_inicial": "2026-08-01",
+            "periodo_final": "2026-08-02"
+          }
+        ]
+      }
+    },
+    "base": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "2050",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:52 GMT",
+        "etag": "W/\"802-BB4z64KoOI25U5SYEa8QkLlw4U0\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 2,
+        "dados": [
+          {
+            "transacao_id": "f6ec0911-1352-4c18-9db9-36446977c073",
+            "user_id": "32ddd2e0-bed1-42e4-911b-c9033ee691eb",
+            "data": "2026-08-01",
+            "data_competencia": null,
+            "data_postagem": null,
+            "banco": "Nubank",
+            "origem_financeira": "F03E01 Account A",
+            "contraparte": "F03E01 Counterparty A",
+            "categoria": "F03E01 Category A",
+            "tipo_movimento": "expense",
+            "status_lancamento": "posted",
+            "status_conciliacao": "pending",
+            "origem_transacao": "manual",
+            "descricao": "F03E01 Expense A",
+            "descricao_normalizada": "F03E01 Expense A",
+            "valor": -10,
+            "valor_absoluto": 10,
+            "moeda": "BRL",
+            "conta_financeira_id": "c26a519a-7d15-4999-bd71-e636f40ad4d8",
+            "cartao_id": null,
+            "contraparte_id": "56db5dae-f0e9-4af1-827a-fac6ddc69a86",
+            "categoria_id": "eadd9f7b-0385-4898-9439-dcf852c4ecce",
+            "importacao_linha_id": null,
+            "transacao_vinculada_id": null,
+            "hash_deduplicacao": "d7d2a5394dc6b8935676bf6c331db031355626ef324cac2830ff235a28504dba",
+            "grupo_duplicidade": "f03e01-a",
+            "observacoes": null,
+            "criado_em": "2026-08-01T23:26:28.307985+00:00",
+            "atualizado_em": "2026-08-01T23:26:28.307985+00:00",
+            "arquivado_em": null
+          },
+          {
+            "transacao_id": "7ca384cb-1ccd-417e-8eac-cbd63ae10521",
+            "user_id": "32ddd2e0-bed1-42e4-911b-c9033ee691eb",
+            "data": "2026-08-02",
+            "data_competencia": null,
+            "data_postagem": null,
+            "banco": "Nubank",
+            "origem_financeira": "F03E01 Account A",
+            "contraparte": "F03E01 Counterparty A",
+            "categoria": "Transferencia entre contas proprias",
+            "tipo_movimento": "transfer",
+            "status_lancamento": "posted",
+            "status_conciliacao": "pending",
+            "origem_transacao": "manual",
+            "descricao": "F03E01 Shared",
+            "descricao_normalizada": "F03E01 Shared",
+            "valor": -5,
+            "valor_absoluto": 5,
+            "moeda": "BRL",
+            "conta_financeira_id": "c26a519a-7d15-4999-bd71-e636f40ad4d8",
+            "cartao_id": null,
+            "contraparte_id": "56db5dae-f0e9-4af1-827a-fac6ddc69a86",
+            "categoria_id": "47eb9e4c-3c6f-4f1b-a7fd-93b56318475e",
+            "importacao_linha_id": null,
+            "transacao_vinculada_id": null,
+            "hash_deduplicacao": null,
+            "grupo_duplicidade": null,
+            "observacoes": null,
+            "criado_em": "2026-08-01T23:26:28.307985+00:00",
+            "atualizado_em": "2026-08-01T23:26:28.307985+00:00",
+            "arquivado_em": null
+          }
+        ]
+      }
+    },
+    "recorrentes": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "254",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:54 GMT",
+        "etag": "W/\"fe-wR2uVZLQw9XZJ32piRCXB6EvcEQ\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "user_id": "32ddd2e0-bed1-42e4-911b-c9033ee691eb",
+            "contraparte": "F03E01 Counterparty A",
+            "valor_medio": 7.5,
+            "ocorrencias": 2,
+            "periodicidade_estimada": "recorrencia_indeterminada",
+            "ultimo_lancamento": "2026-08-02"
+          }
+        ]
+      }
+    },
+    "fornecedores": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "228",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:55 GMT",
+        "etag": "W/\"e4-BJ9sIRgyVWZ3YtTsQCdDZpJnWZI\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "user_id": "32ddd2e0-bed1-42e4-911b-c9033ee691eb",
+            "fornecedor": "F03E01 Counterparty A",
+            "total_gasto": 15,
+            "quantidade_transacoes": 2,
+            "ticket_medio": 7.5,
+            "ultimo_lancamento": "2026-08-02"
+          }
+        ]
+      }
+    },
+    "duplicadas": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "46",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:55 GMT",
+        "etag": "W/\"2e-WuG/l9ZmXAP0ep4ILVJHCPYMUk0\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 0,
+        "dados": []
+      }
+    }
+  },
+  "user_b": {
+    "banco": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "221",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:52 GMT",
+        "etag": "W/\"dd-bERZ1wW+uu+TH1pc05cJYCKXCLM\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "user_id": "6142f61b-3631-4904-b0a4-14769e365887",
+            "banco": "Banco Inter",
+            "total_gasto": 20,
+            "quantidade_transacoes": 1,
+            "periodo_inicial": "2026-08-01",
+            "periodo_final": "2026-08-01"
+          }
+        ]
+      }
+    },
+    "base": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "1081",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:53 GMT",
+        "etag": "W/\"439-8DaMsMB0RgHp9UTgTfID8jDSk+w\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "transacao_id": "c425d4ab-b0c9-458a-9afb-113bc1973567",
+            "user_id": "6142f61b-3631-4904-b0a4-14769e365887",
+            "data": "2026-08-01",
+            "data_competencia": null,
+            "data_postagem": null,
+            "banco": "Banco Inter",
+            "origem_financeira": "F03E01 Account B",
+            "contraparte": "F03E01 Counterparty B",
+            "categoria": "F03E01 Category B",
+            "tipo_movimento": "expense",
+            "status_lancamento": "posted",
+            "status_conciliacao": "pending",
+            "origem_transacao": "manual",
+            "descricao": "F03E01 Expense B",
+            "descricao_normalizada": "F03E01 Expense B",
+            "valor": -20,
+            "valor_absoluto": 20,
+            "moeda": "BRL",
+            "conta_financeira_id": "fbfd71e5-9704-4a43-9a3a-3e31c038af26",
+            "cartao_id": null,
+            "contraparte_id": "2b063714-961e-4178-8a2e-6fe61cdce689",
+            "categoria_id": "6e21a912-153f-4242-b96e-da7d8d31ed71",
+            "importacao_linha_id": null,
+            "transacao_vinculada_id": null,
+            "hash_deduplicacao": "b0c2cf1725807ea91e3c14b4f08597bbef31143a5d798794f3f0aea27b71d7d8",
+            "grupo_duplicidade": "f03e01-b",
+            "observacoes": null,
+            "criado_em": "2026-08-01T23:26:28.307985+00:00",
+            "atualizado_em": "2026-08-01T23:26:28.307985+00:00",
+            "arquivado_em": null
+          }
+        ]
+      }
+    },
+    "recorrentes": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "46",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:54 GMT",
+        "etag": "W/\"2e-WuG/l9ZmXAP0ep4ILVJHCPYMUk0\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 0,
+        "dados": []
+      }
+    },
+    "fornecedores": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "227",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:55 GMT",
+        "etag": "W/\"e3-gkGmNkGq/kYuKH1bkbm60mK671U\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "user_id": "6142f61b-3631-4904-b0a4-14769e365887",
+            "fornecedor": "F03E01 Counterparty B",
+            "total_gasto": 20,
+            "quantidade_transacoes": 1,
+            "ticket_medio": 20,
+            "ultimo_lancamento": "2026-08-01"
+          }
+        ]
+      }
+    },
+    "duplicadas": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "46",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sat, 01 Aug 2026 23:27:56 GMT",
+        "etag": "W/\"2e-WuG/l9ZmXAP0ep4ILVJHCPYMUk0\"",
+        "keep-alive": "timeout=5",
+        "vary": "Origin",
+        "x-powered-by": "Express"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 0,
+        "dados": []
+      }
+    }
+  },
+  "isolation": {
+    "banco": {
+      "user_a_total": 1,
+      "user_b_total": 1
+    },
+    "base": {
+      "user_a_total": 2,
+      "user_b_total": 1
+    },
+    "fornecedores": {
+      "user_a_total": 1,
+      "user_b_total": 1
+    }
+  },
+  "frontend_scan": {
+    "contains_service_role_string": false,
+    "contains_supabase_service_role_key": false,
+    "stores_session_in_local_storage": true
+  },
+  "cleanup": {
+    "synthetic_users_removed": true
+  }
+}

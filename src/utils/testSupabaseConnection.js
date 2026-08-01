@@ -10,7 +10,7 @@ const test = async () => {
   if (error) {
     console.error('❌ Erro Supabase:', error.message);
   } else {
-    console.log('✅ Conectado ao Supabase:', data);
+    console.log('✅ Conectado ao Supabase. Total de registros retornados:', Array.isArray(data) ? data.length : 0);
   }
 };
 

@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "validate:auth-flow": "node database/tests/f03e01_runtime_validation.mjs",
+    "bootstrap:owner": "node database/tests/f03e01_bootstrap_owner_user.mjs"
   },
   "keywords": [],
   "author": "",

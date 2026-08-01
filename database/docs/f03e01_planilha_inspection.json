@@ -1,0 +1,368 @@
+{
+  "workbook": "C:\\temp\\Projeto_Financeiro\\Plano_Implantacao_Projeto_Financeiro.xlsx",
+  "captured_at": "2026-08-01T23:23:45.308Z",
+  "ranges": [
+    {
+      "label": "visao_geral",
+      "sheet": "Visao_Geral",
+      "range": "A1:F12",
+      "values": [
+        [
+          "Plano de Implantação — Sistema Financeiro Pessoal",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "Campo",
+          "Informação",
+          null,
+          "Indicador",
+          "Valor",
+          null
+        ],
+        [
+          "Projeto",
+          "Sistema Financeiro Pessoal",
+          null,
+          "Total de etapas",
+          33,
+          null
+        ],
+        [
+          "Pasta de trabalho do Codex",
+          "C:\\temp\\Projeto_Financeiro\\extratos_pub",
+          null,
+          "Concluídas",
+          17,
+          null
+        ],
+        [
+          "Pasta raiz de governança",
+          "C:\\temp\\Projeto_Financeiro",
+          null,
+          "Em andamento",
+          0,
+          null
+        ],
+        [
+          "Objetivo",
+          "Importar OFX do Nubank e Banco Inter, normalizar, evitar duplicidade, conciliar transferências próprias e disponibilizar análises financeiras.",
+          null,
+          "Bloqueadas",
+          0,
+          null
+        ],
+        [
+          "Arquitetura-alvo",
+          "Frontend web + Backend Node.js/Express + PostgreSQL/Supabase + deploy simples para uso pessoal.",
+          null,
+          "Progresso",
+          0.5151515151515151,
+          null
+        ],
+        [
+          "Regra de execução",
+          "Codex trabalha somente dentro de extratos_pub; planilha e README devem ser atualizados ao final de cada etapa.",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          "Status geral",
+          "Banco Supabase validado remotamente com hardening final; backend ainda requer adequacao de autenticacao e isolamento de leitura",
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      ]
+    },
+    {
+      "label": "plano_implantacao",
+      "sheet": "Plano_Implantacao",
+      "range": "A34:P37",
+      "values": [
+        [
+          "F02-E12",
+          "Dados",
+          "Preparar a implantacao e a reconstrucao controlada do banco no novo Supabase",
+          "Consolidar manifesto SQL, checksums, preflight, variaveis, runbook, validacao, evidencia e criterios de GO/NO-GO para a futura reconstrucao do banco, sem criar projeto Supabase e sem executar SQL.",
+          "Manifesto SQL; checksums SHA-256; preflight local; runbook; estrategia de aplicacao por manifesto; plano consolidado de testes; criterios de GO/NO-GO; estrategia de falha e recuperacao; .env.example seguro; planilha atualizada.",
+          "Concluido",
+          "Alta",
+          "Codex",
+          46235.5,
+          46235.5,
+          "100%",
+          "F02-E11",
+          "NAO EXECUTADO - PROJETO SUPABASE AINDA NAO CRIADO. Preparados manifesto SQL, checksums, preflight, runbook, plano consolidado de validacao e criterios de GO/NO-GO. Nenhum SQL foi executado, nenhum Supabase foi criado e migrations/seeds existentes permaneceram inalterados. Proxima etapa recomendada: F02-E13.",
+          "api-financas-backend/database/docs/deployment_sql_manifest.md; api-financas-backend/database/docs/deployment_sql_manifest.json; api-financas-backend/database/docs/deployment_checksums.md; api-financas-backend/database/docs/deployment_preflight.md; api-financas-backend/database/docs/deployment_environment.md; api-financas-backend/database/docs/deployment_execution_strategy.md; api-financas-backend/database/docs/deployment_runbook.md; api-financas-backend/database/docs/deployment_failure_recovery.md; api-financas-backend/database/docs/deployment_validation_plan.md; api-financas-backend/database/docs/deployment_go_no_go.md; api-financas-backend/database/docs/deployment_evidence_checklist.md; api-financas-backend/database/docs/sql_checksums.json; api-financas-backend/database/docs/sql_checksums.sha256; api-financas-backend/database/tests/generate_deployment_artifacts.mjs; api-financas-backend/database/tests/preflight_implantacao.mjs; api-financas-backend/.env.example; api-financas-backend/database/tests/README.md; api-financas-backend/database/seeds/README.md; api-financas-backend/database/README.md; api-financas-backend/database/docs/migration_apply_checklist.md; api-financas-backend/database/docs/migration_dependency_graph.md; docs/arquitetura.md; docs/decisoes.md; docs/roadmap.md; README.md",
+          46235.5,
+          null
+        ],
+        [
+          "F02-E13",
+          "Dados",
+          "Executar a implantacao real no novo Supabase e validar o backend",
+          "Configurar o ambiente real, aplicar migrations e seeds no Supabase por CLI, reparar historico de migrations quando necessario, validar estrutura/RLS e executar smoke test do backend sem uso de SQL manual no painel.",
+          "Deploy remoto concluido; seed aplicado; staging Supabase CLI; historico remoto reparado; validacao estrutural; smoke test HTTP e Supabase; documentacao de execucao e evidencias; planilha atualizada.",
+          "Concluido",
+          "Alta",
+          "Codex",
+          46240.7083333333,
+          46240.7083333333,
+          "100%",
+          "F02-E12",
+          "Projeto Supabase financeiro-sendbox implantado em 2026-08-01. Foi necessario criar staging supabase/ para o CLI, reparar o historico remoto das duas primeiras migrations por colisao de versao no prefixo de data e corrigir a migration pendente 20260726_082__create_compatibility_analytics_views.sql antes da aplicacao. As 27 migrations ficaram registradas no historico remoto, os seeds foram aplicados, a conexao do backend ao Supabase foi validada e os endpoints / e /health/health responderam 200. Observacao: financial_institutions permanece sem RLS por desenho atual de catalogo global e deve ser reavaliada antes do go-live publico.",
+          "api-financas-backend/database/docs/deployment_execution_report.md; api-financas-backend/database/docs/deployment_validation_results.json; api-financas-backend/database/docs/deployment_execution_log.json; api-financas-backend/database/tests/stage_supabase_cli_project.mjs; api-financas-backend/database/tests/execute_remote_manifest.mjs; api-financas-backend/database/tests/validate_remote_structure.mjs; api-financas-backend/supabase/config.toml; api-financas-backend/database/migrations/20260726_082__create_compatibility_analytics_views.sql; api-financas-backend/.env; api-financas-backend/database/docs/deployment_runbook.md; api-financas-backend/database/docs/deployment_validation_plan.md; api-financas-backend/database/docs/deployment_evidence_checklist.md; README.md; docs/decisoes.md; Plano_Implantacao_Projeto_Financeiro.xlsx",
+          46240.7083333333,
+          null
+        ],
+        [
+          "F02-E14",
+          "Dados",
+          "Validar e endurecer o banco implantado no Supabase",
+          "Auditar migrations, staging, manifesto, checksums e historico remoto; corrigir apenas falhas estruturais comprovadas; reaplicar seeds; validar RLS, views, advisor, current_app_user_id e rotas reais do backend contra o banco remoto sem alterar a autenticacao funcional.",
+          "Pos-validacao remota concluida; inventario remoto consolidado; migration 090 confirmada; migration 091 aplicada para hardening de search_path; seeds reaplicados com idempotencia; RLS e views testados com usuarios sinteticos; rotas do backend classificadas; artefato externo verificado; documentacao e governanca atualizadas.",
+          "Concluido",
+          "Alta",
+          "Codex",
+          46240.75,
+          46240.75,
+          "100%",
+          "F02-E13",
+          "O banco remoto ficou alinhado ao manifesto canonico corrigido, incluindo o registro formal da excecao historica da migration 082 e as migrations corretivas 090 e 091. O advisor de seguranca passou a reportar apenas o caso esperado de audit_events com RLS sem policy. Os testes reais comprovaram isolamento entre os usuarios sinteticos A e B nas tabelas privadas e nas views security_invoker. As rotas atuais /gastos/* seguem retornando 200, mas ainda usam JWT legado com consultas via service_role e nao respeitam isolamento por usuario, o que impede declarar prontidao funcional do backend sem nova etapa de adaptacao.",
+          "api-financas-backend/database/docs/f02e14_post_deployment_validation.md; api-financas-backend/database/docs/deployment_execution_report.md; api-financas-backend/database/docs/deployment_validation_results.json; api-financas-backend/database/docs/deployment_execution_log.json; api-financas-backend/database/docs/deployment_go_no_go.md; api-financas-backend/database/docs/f02e14_remote_inventory.json; api-financas-backend/database/docs/f02e14_runtime_validation.json; api-financas-backend/database/docs/f02e14_seed_reapply.json; api-financas-backend/database/migrations/20260801_090__secure_financial_institutions.sql; api-financas-backend/database/migrations/20260801_091__harden_fn_set_updated_at_search_path.sql; api-financas-backend/database/tests/update_planilha_f02e14.mjs; README.md; docs/arquitetura.md; docs/decisoes.md; docs/governanca.md; docs/roadmap.md; Plano_Implantacao_Projeto_Financeiro.xlsx",
+          46240.75,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      ]
+    },
+    {
+      "label": "registro_alteracoes",
+      "sheet": "Registro_Alteracoes",
+      "range": "A17:G20",
+      "values": [
+        [
+          46235.5,
+          "F02-E12",
+          "Preparacao local da reconstrucao controlada do banco com manifesto SQL, checksums, preflight, runbook, plano de validacao e criterios de GO/NO-GO.",
+          "api-financas-backend/database/docs/deployment_sql_manifest.md; api-financas-backend/database/docs/deployment_sql_manifest.json; api-financas-backend/database/docs/sql_checksums.json; api-financas-backend/database/docs/sql_checksums.sha256; api-financas-backend/database/docs/deployment_preflight.md; api-financas-backend/database/docs/deployment_environment.md; api-financas-backend/database/docs/deployment_execution_strategy.md; api-financas-backend/database/docs/deployment_runbook.md; api-financas-backend/database/docs/deployment_failure_recovery.md; api-financas-backend/database/docs/deployment_validation_plan.md; api-financas-backend/database/docs/deployment_go_no_go.md; api-financas-backend/database/docs/deployment_evidence_checklist.md; api-financas-backend/database/tests/generate_deployment_artifacts.mjs; api-financas-backend/database/tests/preflight_implantacao.mjs",
+          "README.md; docs/arquitetura.md; docs/roadmap.md; docs/decisoes.md; api-financas-backend/.env.example; api-financas-backend/database/README.md; api-financas-backend/database/docs/README.md; api-financas-backend/database/tests/README.md; api-financas-backend/database/seeds/README.md; api-financas-backend/database/docs/migration_apply_checklist.md; api-financas-backend/database/docs/migration_dependency_graph.md; Plano_Implantacao_Projeto_Financeiro.xlsx",
+          "Validacao estatica local; manifesto gerado; checksums gerados; preflight READY-FOR-NEXT-STAGE; git status; sem SQL; sem Supabase",
+          "Concluido localmente"
+        ],
+        [
+          46240.7083333333,
+          "F02-E13",
+          "Implantacao real no Supabase com staging do CLI, reparo do historico remoto, correcao da migration 082, aplicacao de migrations/seeds e smoke test do backend.",
+          "api-financas-backend/database/docs/deployment_execution_report.md; api-financas-backend/database/docs/deployment_validation_results.json; api-financas-backend/database/docs/deployment_execution_log.json; api-financas-backend/database/tests/stage_supabase_cli_project.mjs; api-financas-backend/database/tests/execute_remote_manifest.mjs; api-financas-backend/database/tests/validate_remote_structure.mjs; api-financas-backend/supabase/config.toml; api-financas-backend/database/migrations/20260726_082__create_compatibility_analytics_views.sql",
+          "api-financas-backend/.env; README.md; Plano_Implantacao_Projeto_Financeiro.xlsx",
+          "Preflight reaproveitado; conectividade real com banco; db push com seed; validacao remota por consultas; smoke test Supabase e HTTP; sem SQL manual em dashboard; sem commit/push",
+          "Concluido com banco real"
+        ],
+        [
+          46240.75,
+          "F02-E14",
+          "Validacao remota completa do Supabase com hardening estrutural, idempotencia de seeds, testes reais de RLS/views e classificacao das rotas do backend.",
+          "api-financas-backend/database/docs/f02e14_post_deployment_validation.md; api-financas-backend/database/docs/deployment_execution_report.md; api-financas-backend/database/docs/deployment_validation_results.json; api-financas-backend/database/docs/deployment_execution_log.json; api-financas-backend/database/docs/f02e14_remote_inventory.json; api-financas-backend/database/docs/f02e14_runtime_validation.json; api-financas-backend/database/docs/f02e14_seed_reapply.json; api-financas-backend/database/migrations/20260801_090__secure_financial_institutions.sql; api-financas-backend/database/migrations/20260801_091__harden_fn_set_updated_at_search_path.sql",
+          "README.md; docs/arquitetura.md; docs/decisoes.md; docs/governanca.md; docs/roadmap.md; Plano_Implantacao_Projeto_Financeiro.xlsx",
+          "Supabase remoto auditado; advisor rerrodado; sem SQL manual em dashboard; usuarios sinteticos limpos ao final; frontend preservado; sem commit/push",
+          "Concluido com GO COM RESSALVAS para adaptacao do backend"
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      ]
+    },
+    {
+      "label": "decisoes",
+      "sheet": "Decisoes",
+      "range": "A52:G58",
+      "values": [
+        [
+          "DEC-052",
+          46240.7083333333,
+          "Staging supabase/ passa a ser o adaptador operacional oficial para deploy remoto.",
+          "As migrations do projeto usam nomenclatura orientada por onda, mas o Supabase CLI compara apenas o prefixo de versao antes do primeiro underscore.",
+          "Renomear migrations originais; aplicar SQL manualmente; manter originais e gerar copias compativeis apenas no staging supabase/.",
+          "Preserva o historico aprovado do projeto e viabiliza o deploy remoto rastreavel pelo Supabase CLI.",
+          "Qualquer nova migration deve continuar sendo espelhada pelo script de staging antes do push remoto."
+        ],
+        [
+          "DEC-053",
+          46240.7083333333,
+          "Falha estrutural de migration pendente deve ser corrigida antes do push continuar.",
+          "A migration 082 apresentou erro SQL real durante o deploy remoto e o runbook exige parada no primeiro erro estrutural.",
+          "Ignorar a falha; editar o banco manualmente; corrigir a migration pendente e retomar o push a partir dela.",
+          "Mantem o banco alinhado ao versionamento e evita drift fora das migrations.",
+          "A migration 20260726_082__create_compatibility_analytics_views.sql passou a ser a fonte correta para futuros ambientes."
+        ],
+        [
+          "DEC-054",
+          46240.75,
+          "financial_institutions passa a ter RLS explicito mantendo o catalogo global.",
+          "A validacao real da F02-E14 comprovou que deixar a tabela sem RLS gerava alerta de seguranca e mantinha exposicao desnecessaria para roles de cliente.",
+          "Manter sem RLS; adicionar user_id; habilitar RLS com leitura apenas para authenticated e manutencao administrativa por service_role.",
+          "Preserva o catalogo compartilhado e elimina a exposicao desnecessaria para anon.",
+          "A migration 20260801_090__secure_financial_institutions.sql torna essa regra obrigatoria em novos ambientes."
+        ],
+        [
+          "DEC-055",
+          46240.75,
+          "fn_set_updated_at deve operar com search_path fixo.",
+          "O Supabase Advisor apontou mutable search_path na function de trigger generica, embora o comportamento funcional ja estivesse correto.",
+          "Ignorar o warning; reescrever triggers; endurecer a function existente por nova migration.",
+          "Elimina o warning estrutural remanescente sem mudar contratos das tabelas que usam updated_at.",
+          "A migration 20260801_091__harden_fn_set_updated_at_search_path.sql deve permanecer no fluxo oficial de deploy."
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      ]
+    },
+    {
+      "label": "riscos_pendencias",
+      "sheet": "Riscos_Pendencias",
+      "range": "A55:H60",
+      "values": [
+        [
+          "P-023",
+          "Pendencia",
+          "Documentar no fluxo operacional das proximas etapas que o deploy remoto deve passar pelo staging supabase/ e pelo script stage_supabase_cli_project.mjs.",
+          "Medio",
+          "Media",
+          "Media",
+          "Atualizar o procedimento padrao das proximas etapas de dados e qualquer automacao de CI/CD que execute supabase db push.",
+          "Codex"
+        ],
+        [
+          "R-032",
+          "Risco",
+          "As rotas atuais /gastos/* consultam o Supabase com service_role e JWT legado proprio do backend, retornando dados cruzados mesmo apos a validacao correta de RLS no banco remoto.",
+          "Alto",
+          "Alta",
+          "Alta",
+          "Executar a proxima etapa focada em adaptar autenticacao e leituras do backend para claims compativeis com auth_subject/sub e clientes nao privilegiados.",
+          "Codex"
+        ],
+        [
+          "P-024",
+          "Pendencia",
+          "A excecao historica da migration 082 e as migrations corretivas 090/091 ja estao documentadas, mas a camada funcional do backend ainda nao consome o isolamento validado no banco.",
+          "Medio",
+          "Alta",
+          "Alta",
+          "Planejar a etapa seguinte para alinhar /auth/login e /gastos/* ao novo modelo de identidade Supabase, sem reabrir o escopo de OFX ou frontend.",
+          "Codex"
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      ]
+    }
+  ]
+}

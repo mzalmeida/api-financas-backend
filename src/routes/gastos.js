@@ -1,67 +1,49 @@
 const express = require("express");
-console.log("🚀 ROTAS DE GASTOS CARREGADAS");
+
+const requireSupabaseAuth = require("../middlewares/requireSupabaseAuth");
+const { createSupabaseUserClient } = require("../config/supabaseClients");
+
 const router = express.Router();
-const jwt = require("jsonwebtoken");
-const { createClient } = require("@supabase/supabase-js");
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const viewByRoute = {
+  banco: "vw_gastos_por_banco",
+  base: "vw_transacoes_base",
+  recorrentes: "vw_transacoes_recorrentes",
+  fornecedores: "view_transacoes_fornecedores",
+  duplicadas: "view_transacoes_duplicadas",
+};
 
-// 🔐 middleware JWT
-function autenticar(req, res, next) {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json({ erro: "Token não informado" });
-  }
-
-  const token = authHeader.split(" ")[1];
-
+async function buscarView(nomeView, req, res) {
   try {
-    jwt.verify(token, process.env.JWT_SECRET);
-    next();
-  } catch {
-    return res.status(401).json({ erro: "Token inválido" });
+    const supabase = createSupabaseUserClient(req.accessToken);
+    const { data, error } = await supabase.from(nomeView).select("*");
+
+    if (error) {
+      console.error(`Erro Supabase ao consultar ${nomeView}:`, error.message);
+      return res.status(502).json({
+        erro: "Erro ao consultar dados financeiros",
+        codigo: "supabase_query_error",
+      });
+    }
+
+    return res.json({
+      status: "ok",
+      total_registros: data.length,
+      dados: data,
+    });
+  } catch (error) {
+    console.error(`Falha interna ao consultar ${nomeView}:`, error.message);
+    return res.status(500).json({
+      erro: "Falha interna ao consultar dados financeiros",
+      codigo: "internal_query_error",
+    });
   }
 }
 
-// 🔹 helper genérico
-async function buscarView(nomeView, res) {
-  const { data, error } = await supabase.from(nomeView).select("*");
-
-  if (error) {
-    return res.status(500).json({ erro: error.message });
-  }
-
-  return res.json({
-    status: "ok",
-    total_registros: data.length,
-    dados: data
+for (const [routeName, viewName] of Object.entries(viewByRoute)) {
+  router.get(`/${routeName}`, requireSupabaseAuth, async (req, res) => {
+    return buscarView(viewName, req, res);
   });
 }
-
-/* ===== ROTAS ===== */
-
-router.get("/banco", autenticar, async (req, res) => {
-  return buscarView("vw_gastos_por_banco", res);
-});
-
-router.get("/base", autenticar, async (req, res) => {
-  return buscarView("vw_transacoes_base", res);
-});
-
-router.get("/recorrentes", autenticar, async (req, res) => {
-  return buscarView("vw_transacoes_recorrentes", res);
-});
-
-router.get("/fornecedores", autenticar, async (req, res) => {
-  return buscarView("view_transacoes_fornecedores", res);
-});
-
-router.get("/duplicadas", autenticar, async (req, res) => {
-  return buscarView("view_transacoes_duplicadas", res);
-});
 
 module.exports = router;

@@ -3,7 +3,7 @@ require("dotenv").config(); // CARREGA O .env
 const jwt = require("jsonwebtoken");
 
 // DEBUG (obrigatório agora)
-console.log("JWT_SECRET =", process.env.JWT_SECRET);
+console.log("JWT_SECRET carregado =", Boolean(process.env.JWT_SECRET));
 
 if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET não foi carregado");
@@ -18,6 +18,6 @@ const token = jwt.sign(payload, process.env.JWT_SECRET, {
   expiresIn: "1d",
 });
 
-console.log("\nTOKEN GERADO COM SUCESSO:\n");
-console.log(token);
+console.log("\nTOKEN GERADO COM SUCESSO (oculto por seguranca)\n");
+console.log(`${token.slice(0, 16)}...`);
 
