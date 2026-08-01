@@ -83,3 +83,10 @@ Objetivo:
 - confirmar ou ajustar `health check path=/health` no painel do Render;
 - disparar e validar o deploy publico do backend e do frontend;
 - criar o usuario proprietario real, se ainda inexistente.
+
+## Evidencia publica observada em 2026-08-01
+
+- os commits da F03-E01 foram enviados para `main` nos repositorios oficiais de backend e frontend;
+- a URL publica do backend continuou respondendo `/` com `200`, `/health` com `404` e `/health/health` com `200`;
+- a URL publica do frontend continuou servindo o HTML antigo com campo `linkedin`;
+- portanto, o push foi concluido, mas a implantacao publica do Render nao ficou comprovada dentro da janela observada nesta etapa.
