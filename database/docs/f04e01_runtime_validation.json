@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-08-02T17:49:20.276Z",
+  "generated_at": "2026-08-02T18:20:45.600Z",
   "fixture": "test\\fixtures\\nubank.ofx",
   "synthetic_users": [
     {
       "code": "A",
       "email_masked": "f04e01-user-a+masked@example.invalid",
-      "auth_user_id_masked": "aedbc715...",
-      "public_user_id_masked": "52acc78f..."
+      "auth_user_id_masked": "37b46d48...",
+      "public_user_id_masked": "a4c3ed48..."
     },
     {
       "code": "B",
       "email_masked": "f04e01-user-b+masked@example.invalid",
-      "auth_user_id_masked": "97c32acd...",
-      "public_user_id_masked": "33c135ec..."
+      "auth_user_id_masked": "f5b10e38...",
+      "public_user_id_masked": "d178c8a8..."
     }
   ],
   "options": {
@@ -21,7 +21,7 @@
     "data": {
       "status": "ok",
       "user": {
-        "id": "52acc78f-1c34-41a1-a01a-e0a359940eb2",
+        "id": "a4c3ed48-5871-469e-838a-d06cf868ffd2",
         "email": "f04e01-user-a@example.invalid",
         "display_name": "F04E01 User A"
       },
@@ -50,7 +50,7 @@
     "data": {
       "status": "ok",
       "account": {
-        "id": "c0b69eb4-ac06-4689-a500-96d2e4ee4de3",
+        "id": "200acfaf-97ca-45d2-94b8-71ac912baf6a",
         "name": "F04E01 Conta Nubank",
         "account_type": "checking",
         "currency_code": "BRL",
@@ -68,7 +68,7 @@
     "data": {
       "status": "ok",
       "preview": {
-        "import_id": "5bd81dca-53f6-4caa-8ea3-6704da44b860",
+        "import_id": "a000b72b-9d65-46bb-9c16-f4324a9d96d5",
         "status": "pending_confirmation",
         "file": {
           "name": "nubank.ofx",
@@ -85,7 +85,7 @@
           "confidence": "high"
         },
         "financial_account": {
-          "id": "c0b69eb4-ac06-4689-a500-96d2e4ee4de3",
+          "id": "200acfaf-97ca-45d2-94b8-71ac912baf6a",
           "name": "F04E01 Conta Nubank",
           "account_type": "checking",
           "external_identifier_masked": "5b399485...b198",
@@ -143,7 +143,7 @@
   },
   "preview_database": {
     "import": {
-      "id": "5bd81dca-53f6-4caa-8ea3-6704da44b860",
+      "id": "a000b72b-9d65-46bb-9c16-f4324a9d96d5",
       "status_code": "pending_confirmation",
       "total_rows": 2,
       "processed_rows": 2,
@@ -180,7 +180,7 @@
     "data": {
       "status": "ok",
       "confirmation": {
-        "import_id": "5bd81dca-53f6-4caa-8ea3-6704da44b860",
+        "import_id": "a000b72b-9d65-46bb-9c16-f4324a9d96d5",
         "status": "completed",
         "already_confirmed": false,
         "summary": {
@@ -200,7 +200,7 @@
     "data": {
       "status": "ok",
       "confirmation": {
-        "import_id": "5bd81dca-53f6-4caa-8ea3-6704da44b860",
+        "import_id": "a000b72b-9d65-46bb-9c16-f4324a9d96d5",
         "status": "completed",
         "already_confirmed": true,
         "totals": {
@@ -219,7 +219,7 @@
     "data": {
       "status": "ok",
       "preview": {
-        "import_id": "6950fd84-7816-485e-987a-2622f5a2b3a9",
+        "import_id": "1acf654e-a178-49c4-93c9-2b3da5a626fb",
         "status": "failed",
         "file": {
           "name": "nubank-repeat.ofx",
@@ -236,7 +236,7 @@
           "confidence": "high"
         },
         "financial_account": {
-          "id": "c0b69eb4-ac06-4689-a500-96d2e4ee4de3",
+          "id": "200acfaf-97ca-45d2-94b8-71ac912baf6a",
           "name": "F04E01 Conta Nubank",
           "account_type": "checking",
           "external_identifier_masked": "5b399485...b198",
@@ -265,11 +265,11 @@
         ],
         "file_duplicates": [
           {
-            "import_id": "5bd81dca-53f6-4caa-8ea3-6704da44b860",
+            "import_id": "a000b72b-9d65-46bb-9c16-f4324a9d96d5",
             "import_status": "completed",
             "original_file_name": "nubank.ofx",
-            "received_at": "2026-08-02T17:48:16.794265+00:00",
-            "finished_at": "2026-08-02T17:49:40.174+00:00"
+            "received_at": "2026-08-02T18:19:43.017088+00:00",
+            "finished_at": "2026-08-02T18:21:07.748+00:00"
           }
         ],
         "preview_rows": [
@@ -310,10 +310,10 @@
       "total_registros": 1,
       "imports": [
         {
-          "id": "5bd81dca-53f6-4caa-8ea3-6704da44b860",
+          "id": "a000b72b-9d65-46bb-9c16-f4324a9d96d5",
           "status": "completed",
-          "started_at": "2026-08-02T17:48:16.557506+00:00",
-          "finished_at": "2026-08-02T17:49:40.174+00:00",
+          "started_at": "2026-08-02T18:19:42.415137+00:00",
+          "finished_at": "2026-08-02T18:21:07.748+00:00",
           "totals": {
             "total_rows": 2,
             "processed_rows": 2,
@@ -322,16 +322,16 @@
             "duplicate_rows": 0
           },
           "file": {
-            "id": "be5b28ca-66bc-47b4-86fc-bfebd5e43e73",
+            "id": "75fd6cac-2ee1-4b05-a2cc-790114035808",
             "name": "nubank.ofx",
             "size_bytes": 1342,
             "hash_masked": "965bddef...a318",
             "status": "processed",
-            "received_at": "2026-08-02T17:48:16.794265+00:00",
-            "processed_at": "2026-08-02T17:49:36.619+00:00"
+            "received_at": "2026-08-02T18:19:43.017088+00:00",
+            "processed_at": "2026-08-02T18:21:02.598+00:00"
           },
           "financial_account": {
-            "id": "c0b69eb4-ac06-4689-a500-96d2e4ee4de3",
+            "id": "200acfaf-97ca-45d2-94b8-71ac912baf6a",
             "name": "F04E01 Conta Nubank",
             "account_type": "checking",
             "masked_account_number": "***1234"
@@ -353,10 +353,10 @@
     "data": {
       "status": "ok",
       "importacao": {
-        "id": "5bd81dca-53f6-4caa-8ea3-6704da44b860",
+        "id": "a000b72b-9d65-46bb-9c16-f4324a9d96d5",
         "status": "completed",
-        "started_at": "2026-08-02T17:48:16.557506+00:00",
-        "finished_at": "2026-08-02T17:49:40.174+00:00",
+        "started_at": "2026-08-02T18:19:42.415137+00:00",
+        "finished_at": "2026-08-02T18:21:07.748+00:00",
         "totals": {
           "total_rows": 2,
           "processed_rows": 2,
@@ -388,7 +388,7 @@
         },
         "error_summary": null,
         "financial_account": {
-          "id": "c0b69eb4-ac06-4689-a500-96d2e4ee4de3",
+          "id": "200acfaf-97ca-45d2-94b8-71ac912baf6a",
           "name": "F04E01 Conta Nubank",
           "account_type": "checking",
           "masked_account_number": "***1234",
@@ -401,19 +401,19 @@
         },
         "files": [
           {
-            "id": "be5b28ca-66bc-47b4-86fc-bfebd5e43e73",
+            "id": "75fd6cac-2ee1-4b05-a2cc-790114035808",
             "name": "nubank.ofx",
             "size_bytes": 1342,
             "hash_masked": "965bddef...a318",
             "encoding": "utf8",
             "status": "processed",
-            "received_at": "2026-08-02T17:48:16.794265+00:00",
-            "processed_at": "2026-08-02T17:49:36.619+00:00"
+            "received_at": "2026-08-02T18:19:43.017088+00:00",
+            "processed_at": "2026-08-02T18:21:02.598+00:00"
           }
         ],
         "rows": [
           {
-            "id": "1edc5b55-ae87-4eff-ba29-79f94addd6df",
+            "id": "a3033b12-40f0-47d6-9a13-3124a90a05bf",
             "row_number": 1,
             "status": "accepted",
             "occurred_on": "2026-07-15",
@@ -422,10 +422,10 @@
             "fit_id": "nu-001",
             "error_code": null,
             "error_message": null,
-            "linked_transaction_id": "ba62dff4-eb87-464a-b73a-888c7c9b27f0"
+            "linked_transaction_id": "5170f6de-88e4-4dd8-b808-7d2e35c1bae5"
           },
           {
-            "id": "06841078-e11d-43c0-9a44-b7aa87d1f7c1",
+            "id": "315f151e-b5e1-4d04-862e-b816fd24fe49",
             "row_number": 2,
             "status": "accepted",
             "occurred_on": "2026-07-16",
@@ -434,7 +434,7 @@
             "fit_id": "nu-002",
             "error_code": null,
             "error_message": null,
-            "linked_transaction_id": "7a73c892-ef92-48db-8013-c9a80a669e33"
+            "linked_transaction_id": "5ad1c9aa-e48c-4e8b-8347-3aa046041c27"
           }
         ],
         "rows_truncated": false
@@ -450,8 +450,8 @@
         "total_registros": 2,
         "dados": [
           {
-            "transacao_id": "ba62dff4-eb87-464a-b73a-888c7c9b27f0",
-            "user_id": "52acc78f-1c34-41a1-a01a-e0a359940eb2",
+            "transacao_id": "5170f6de-88e4-4dd8-b808-7d2e35c1bae5",
+            "user_id": "a4c3ed48-5871-469e-838a-d06cf868ffd2",
             "data": "2026-07-15",
             "data_competencia": null,
             "data_postagem": "2026-07-15",
@@ -468,22 +468,22 @@
             "valor": -45.9,
             "valor_absoluto": 45.9,
             "moeda": "BRL",
-            "conta_financeira_id": "c0b69eb4-ac06-4689-a500-96d2e4ee4de3",
+            "conta_financeira_id": "200acfaf-97ca-45d2-94b8-71ac912baf6a",
             "cartao_id": null,
             "contraparte_id": null,
             "categoria_id": null,
-            "importacao_linha_id": "1edc5b55-ae87-4eff-ba29-79f94addd6df",
+            "importacao_linha_id": "a3033b12-40f0-47d6-9a13-3124a90a05bf",
             "transacao_vinculada_id": null,
-            "hash_deduplicacao": "b3fa2914d610823f0f1d592d25056a2fb4e3eb788e5ebb82e739f09694f50a45",
+            "hash_deduplicacao": "5a115f457c5a1f3873611b8869e87d2f4ed63f79dd42ccdd0e93cdc0f0bc41bf",
             "grupo_duplicidade": "fitid:nu-001",
             "observacoes": null,
-            "criado_em": "2026-08-02T17:48:19.622148+00:00",
-            "atualizado_em": "2026-08-02T17:48:19.622148+00:00",
+            "criado_em": "2026-08-02T18:19:47.092434+00:00",
+            "atualizado_em": "2026-08-02T18:19:47.092434+00:00",
             "arquivado_em": null
           },
           {
-            "transacao_id": "7a73c892-ef92-48db-8013-c9a80a669e33",
-            "user_id": "52acc78f-1c34-41a1-a01a-e0a359940eb2",
+            "transacao_id": "5ad1c9aa-e48c-4e8b-8347-3aa046041c27",
+            "user_id": "a4c3ed48-5871-469e-838a-d06cf868ffd2",
             "data": "2026-07-16",
             "data_competencia": null,
             "data_postagem": "2026-07-16",
@@ -500,17 +500,17 @@
             "valor": 1500,
             "valor_absoluto": 1500,
             "moeda": "BRL",
-            "conta_financeira_id": "c0b69eb4-ac06-4689-a500-96d2e4ee4de3",
+            "conta_financeira_id": "200acfaf-97ca-45d2-94b8-71ac912baf6a",
             "cartao_id": null,
             "contraparte_id": null,
             "categoria_id": null,
-            "importacao_linha_id": "06841078-e11d-43c0-9a44-b7aa87d1f7c1",
+            "importacao_linha_id": "315f151e-b5e1-4d04-862e-b816fd24fe49",
             "transacao_vinculada_id": null,
-            "hash_deduplicacao": "287c6d749769266f1a099dffbebfdb87a82dff1d5c1c4bb62fb0674b83024347",
+            "hash_deduplicacao": "fd39a968aac6797a2731ddba964fc54c713e3f5dccbee2a30075598f071d275d",
             "grupo_duplicidade": "fitid:nu-002",
             "observacoes": null,
-            "criado_em": "2026-08-02T17:48:19.622148+00:00",
-            "atualizado_em": "2026-08-02T17:48:19.622148+00:00",
+            "criado_em": "2026-08-02T18:19:47.092434+00:00",
+            "atualizado_em": "2026-08-02T18:19:47.092434+00:00",
             "arquivado_em": null
           }
         ]
@@ -524,7 +524,7 @@
         "total_registros": 1,
         "dados": [
           {
-            "user_id": "52acc78f-1c34-41a1-a01a-e0a359940eb2",
+            "user_id": "a4c3ed48-5871-469e-838a-d06cf868ffd2",
             "banco": "Nubank",
             "total_gasto": 45.9,
             "quantidade_transacoes": 1,

@@ -5,6 +5,7 @@ const healthRoutes = require("./routes/health");
 const authRoutes = require("./routes/auth");
 const gastosRoutes = require("./routes/gastos");
 const importsRoutes = require("./routes/imports");
+const portalRoutes = require("./routes/portal");
 const { allowedOrigins, gmailIntegrationEnabled, isOriginAllowed } = require("./config/runtime");
 
 const app = express();
@@ -38,6 +39,7 @@ app.use("/health", healthRoutes);
 app.use("/auth", authRoutes);
 app.use("/gastos", gastosRoutes);
 app.use("/imports", importsRoutes);
+app.use("/portal", portalRoutes);
 
 if (gmailIntegrationEnabled) {
   const gmailRoutes = require("./routes/gmail");

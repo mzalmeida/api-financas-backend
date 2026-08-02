@@ -31,6 +31,15 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - O backend sobe de forma saudavel sem `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` e `GMAIL_TOKEN_SECRET`.
 - A solucao adotada para esta passada foi nao montar `/integrations/gmail` enquanto `GMAIL_INTEGRATION_ENABLED` nao estiver explicitamente habilitada.
 
+## Estado local da RC 1.0
+
+- `GET /portal/overview` consolida metricas, resumo bancario, ultimas transacoes, ultimas importacoes, categorias e tendencia mensal com dados reais.
+- `GET /portal/profile` e `PUT /portal/profile` expõem e atualizam o perfil funcional do usuario no dominio financeiro.
+- `PUT /portal/settings` atualiza `user_settings`, incluindo preferencias do dashboard e configuracoes do portal.
+- `GET|POST|PUT|DELETE /portal/catalog/:entity` cria a camada real de CRUD para `accounts`, `categories`, `cards`, `counterparties` e `institutions`.
+- O backend passou a sustentar o menu completo do frontend 1.0 sem depender de componentes ilustrativos ou rotas vazias.
+- A validacao `npm run validate:f04e01` continuou aprovada apos a introducao das novas rotas de portal, preservando o fluxo OFX homologado.
+
 ## Variaveis de ambiente
 
 - `NODE_ENV`
