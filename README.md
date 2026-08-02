@@ -13,6 +13,20 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - O frontend publicado passou a executar recuperacao e redefinicao de senha diretamente com `supabase-js`, usando apenas `SUPABASE_URL` e `SUPABASE_ANON_KEY`.
 - `/health` e a rota canonica. `/health/health` permanece apenas como compatibilidade temporaria.
 
+## Estado local da F04-E01
+
+- `POST /imports/ofx/preview` recebe um arquivo OFX via `multipart/form-data`, faz parsing em memoria, detecta instituicao, calcula hash, registra `imports`/`import_files`/`import_rows` e devolve preview sem criar `transactions`.
+- `POST /imports/ofx/confirm` confirma uma importacao previamente registrada e cria `transactions` apenas para linhas aceitas e ainda nao confirmadas.
+- `GET /imports` lista o historico resumido das importacoes do usuario autenticado.
+- `GET /imports/:id` devolve os detalhes resumidos da importacao e das linhas processadas.
+- `POST /imports/:id/cancel` cancela apenas importacoes ainda nao confirmadas.
+- `GET /imports/options` lista instituicoes suportadas e contas financeiras do usuario.
+- `POST /imports/accounts` permite criar a conta financeira de destino diretamente no fluxo de importacao.
+- O upload usa `multer` com `memoryStorage`, limite de 5 MB e um arquivo por operacao.
+- O parser OFX foi implementado em Node.js puro com suporte local a OFX SGML e XML, incluindo fixtures sinteticas de Nubank e Banco Inter.
+- A analise mascarada dos OFX reais ficou registrada em `database/docs/ofx_real_samples_analysis.md`.
+- Testes automatizados locais atuais: `npm test` cobre o parser OFX com fixtures sinteticas.
+
 ## Variaveis de ambiente
 
 - `NODE_ENV`

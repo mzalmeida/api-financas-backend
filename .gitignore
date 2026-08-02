@@ -15,6 +15,11 @@ dist/
 build/
 .cache/
 
+# Sensitive financial source files
+*.ofx
+tmp-private/
+private-samples/
+
 # Logs
 #logs/
 #src/logs/*.log

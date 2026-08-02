@@ -4,6 +4,8 @@ const cors = require("cors");
 const healthRoutes = require("./routes/health");
 const authRoutes = require("./routes/auth");
 const gastosRoutes = require("./routes/gastos");
+const importsRoutes = require("./routes/imports");
+const gmailRoutes = require("./routes/gmail");
 const { allowedOrigins, isOriginAllowed } = require("./config/runtime");
 
 const app = express();
@@ -36,6 +38,8 @@ app.get("/auth", (req, res) => {
 app.use("/health", healthRoutes);
 app.use("/auth", authRoutes);
 app.use("/gastos", gastosRoutes);
+app.use("/imports", importsRoutes);
+app.use("/integrations/gmail", gmailRoutes);
 
 app.use((error, req, res, next) => {
   if (error?.message === "Origin not allowed by CORS") {

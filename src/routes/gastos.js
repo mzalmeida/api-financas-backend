@@ -16,7 +16,15 @@ const viewByRoute = {
 async function buscarView(nomeView, req, res) {
   try {
     const supabase = createSupabaseUserClient(req.accessToken);
-    const { data, error } = await supabase.from(nomeView).select("*");
+    const limit = Number.parseInt(req.query.limit, 10);
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.min(limit, 500) : null;
+    let query = supabase.from(nomeView).select("*");
+
+    if (safeLimit) {
+      query = query.limit(safeLimit);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error(`Erro Supabase ao consultar ${nomeView}:`, error.message);

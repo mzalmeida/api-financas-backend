@@ -1,0 +1,559 @@
+{
+  "generated_at": "2026-08-02T14:34:39.439Z",
+  "fixture": "test\\fixtures\\nubank.ofx",
+  "synthetic_users": [
+    {
+      "code": "A",
+      "email_masked": "f04e01-user-a+masked@example.invalid",
+      "auth_user_id_masked": "13aa682a...",
+      "public_user_id_masked": "a1d93023..."
+    },
+    {
+      "code": "B",
+      "email_masked": "f04e01-user-b+masked@example.invalid",
+      "auth_user_id_masked": "0944a668...",
+      "public_user_id_masked": "12aa4677..."
+    }
+  ],
+  "options": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "status": "ok",
+      "user": {
+        "id": "a1d93023-d9f2-4572-bcff-6f370f4101b9",
+        "email": "f04e01-user-a@example.invalid",
+        "display_name": "F04E01 User A"
+      },
+      "institutions": [
+        {
+          "id": "2360150d-63f7-490d-9b7b-f21f540b8728",
+          "name": "Banco Inter",
+          "normalized_name": "banco inter",
+          "external_code": null,
+          "institution_type": "bank"
+        },
+        {
+          "id": "d9774692-c1c4-4c6d-a728-08718beb9929",
+          "name": "Nubank",
+          "normalized_name": "nubank",
+          "external_code": null,
+          "institution_type": "bank"
+        }
+      ],
+      "accounts": []
+    }
+  },
+  "created_account": {
+    "ok": true,
+    "status": 201,
+    "data": {
+      "status": "ok",
+      "account": {
+        "id": "3c4e30f5-d325-43ad-a2a6-baa96c4016bf",
+        "name": "F04E01 Conta Nubank",
+        "account_type": "checking",
+        "currency_code": "BRL",
+        "external_identifier": "f04e01-nubank",
+        "masked_account_number": "***1234",
+        "masked_branch_number": "***1",
+        "financial_institution_id": "d9774692-c1c4-4c6d-a728-08718beb9929",
+        "is_active": true
+      }
+    }
+  },
+  "preview": {
+    "ok": true,
+    "status": 201,
+    "data": {
+      "status": "ok",
+      "preview": {
+        "import_id": "2bed1d56-54dc-4303-b33f-24f84a5ef678",
+        "status": "pending_confirmation",
+        "file": {
+          "name": "nubank.ofx",
+          "size_bytes": 1342,
+          "mime_type": "application/ofx",
+          "extension": "ofx",
+          "hash_masked": "965bddef...a318",
+          "encoding": "utf8"
+        },
+        "institution": {
+          "id": "d9774692-c1c4-4c6d-a728-08718beb9929",
+          "detected_slug": "nubank",
+          "detected_label": "Nubank",
+          "confidence": "high"
+        },
+        "financial_account": {
+          "id": "3c4e30f5-d325-43ad-a2a6-baa96c4016bf",
+          "name": "F04E01 Conta Nubank",
+          "account_type": "checking",
+          "external_identifier_masked": "5b399485...b198",
+          "masked_account_number": "***1234",
+          "masked_branch_number": "***1"
+        },
+        "period": {
+          "start_date": "2026-07-01",
+          "end_date": "2026-07-31"
+        },
+        "currency_code": "BRL",
+        "ledger_balance": 2450.12,
+        "ledger_balance_date": "2026-07-31",
+        "totals": {
+          "total_rows": 2,
+          "valid_rows": 2,
+          "invalid_rows": 0,
+          "duplicate_rows": 0,
+          "income_count": 1,
+          "expense_count": 1,
+          "total_income": 1500,
+          "total_expense": 45.9
+        },
+        "warnings": [],
+        "file_duplicates": [],
+        "preview_rows": [
+          {
+            "row_number": 1,
+            "occurred_on": "2026-07-15",
+            "posted_on": "2026-07-15",
+            "description": "Padaria Central - Compra no debito",
+            "amount": -45.9,
+            "movement_type": "expense",
+            "fit_id": "nu-001",
+            "status": "accepted",
+            "warning": null,
+            "duplicate_reason": null
+          },
+          {
+            "row_number": 2,
+            "occurred_on": "2026-07-16",
+            "posted_on": "2026-07-16",
+            "description": "Salario - Credito folha",
+            "amount": 1500,
+            "movement_type": "income",
+            "fit_id": "nu-002",
+            "status": "accepted",
+            "warning": null,
+            "duplicate_reason": null
+          }
+        ],
+        "preview_rows_truncated": false
+      }
+    }
+  },
+  "preview_database": {
+    "import": {
+      "id": "2bed1d56-54dc-4303-b33f-24f84a5ef678",
+      "status_code": "pending_confirmation",
+      "total_rows": 2,
+      "processed_rows": 2,
+      "accepted_rows": 2,
+      "rejected_rows": 0,
+      "duplicate_rows": 0,
+      "processing_summary": {
+        "stage": "pending_confirmation",
+        "period": {
+          "end_date": "2026-07-31",
+          "start_date": "2026-07-01"
+        },
+        "warnings": [],
+        "currency_code": "BRL",
+        "ledger_balance": 2450.12,
+        "ledger_balance_date": "2026-07-31",
+        "institution_detection": {
+          "slug": "nubank",
+          "label": "Nubank",
+          "confidence": "high",
+          "institutionId": "d9774692-c1c4-4c6d-a728-08718beb9929"
+        },
+        "detected_account_identifier": "123456789"
+      }
+    },
+    "import_files_count": 1,
+    "import_rows_count": 2,
+    "accepted_rows": 2,
+    "duplicate_rows": 0
+  },
+  "confirm": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "status": "ok",
+      "confirmation": {
+        "import_id": "2bed1d56-54dc-4303-b33f-24f84a5ef678",
+        "status": "completed",
+        "already_confirmed": false,
+        "summary": {
+          "created_transactions": 2,
+          "duplicate_rows": 0,
+          "rejected_rows": 0,
+          "accepted_rows": 2,
+          "processed_rows": 2,
+          "total_rows": 2
+        }
+      }
+    }
+  },
+  "confirm_again": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "status": "ok",
+      "confirmation": {
+        "import_id": "2bed1d56-54dc-4303-b33f-24f84a5ef678",
+        "status": "completed",
+        "already_confirmed": true,
+        "totals": {
+          "total_rows": 2,
+          "processed_rows": 2,
+          "accepted_rows": 2,
+          "rejected_rows": 0,
+          "duplicate_rows": 0
+        }
+      }
+    }
+  },
+  "duplicate_preview": {
+    "ok": true,
+    "status": 201,
+    "data": {
+      "status": "ok",
+      "preview": {
+        "import_id": "7f00e28d-e4b7-49cb-ae2b-888bce473e4e",
+        "status": "failed",
+        "file": {
+          "name": "nubank-repeat.ofx",
+          "size_bytes": 1342,
+          "mime_type": "application/ofx",
+          "extension": "ofx",
+          "hash_masked": "965bddef...a318",
+          "encoding": "utf8"
+        },
+        "institution": {
+          "id": "d9774692-c1c4-4c6d-a728-08718beb9929",
+          "detected_slug": "nubank",
+          "detected_label": "Nubank",
+          "confidence": "high"
+        },
+        "financial_account": {
+          "id": "3c4e30f5-d325-43ad-a2a6-baa96c4016bf",
+          "name": "F04E01 Conta Nubank",
+          "account_type": "checking",
+          "external_identifier_masked": "5b399485...b198",
+          "masked_account_number": "***1234",
+          "masked_branch_number": "***1"
+        },
+        "period": {
+          "start_date": "2026-07-01",
+          "end_date": "2026-07-31"
+        },
+        "currency_code": "BRL",
+        "ledger_balance": 2450.12,
+        "ledger_balance_date": "2026-07-31",
+        "totals": {
+          "total_rows": 2,
+          "valid_rows": 0,
+          "invalid_rows": 0,
+          "duplicate_rows": 2,
+          "income_count": 1,
+          "expense_count": 1,
+          "total_income": 1500,
+          "total_expense": 45.9
+        },
+        "warnings": [
+          "Este arquivo ja apareceu anteriormente para a mesma conta."
+        ],
+        "file_duplicates": [
+          {
+            "import_id": "2bed1d56-54dc-4303-b33f-24f84a5ef678",
+            "import_status": "completed",
+            "original_file_name": "nubank.ofx",
+            "received_at": "2026-08-02T14:33:32.803339+00:00",
+            "finished_at": "2026-08-02T14:34:56.867+00:00"
+          }
+        ],
+        "preview_rows": [
+          {
+            "row_number": 1,
+            "occurred_on": "2026-07-15",
+            "posted_on": "2026-07-15",
+            "description": "Padaria Central - Compra no debito",
+            "amount": -45.9,
+            "movement_type": "expense",
+            "fit_id": "nu-001",
+            "status": "duplicate",
+            "warning": null,
+            "duplicate_reason": "Lancamento ja registrado anteriormente para esta conta."
+          },
+          {
+            "row_number": 2,
+            "occurred_on": "2026-07-16",
+            "posted_on": "2026-07-16",
+            "description": "Salario - Credito folha",
+            "amount": 1500,
+            "movement_type": "income",
+            "fit_id": "nu-002",
+            "status": "duplicate",
+            "warning": null,
+            "duplicate_reason": "Lancamento ja registrado anteriormente para esta conta."
+          }
+        ],
+        "preview_rows_truncated": false
+      }
+    }
+  },
+  "history": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "status": "ok",
+      "total_registros": 1,
+      "imports": [
+        {
+          "id": "2bed1d56-54dc-4303-b33f-24f84a5ef678",
+          "status": "completed",
+          "started_at": "2026-08-02T14:33:32.571766+00:00",
+          "finished_at": "2026-08-02T14:34:56.867+00:00",
+          "totals": {
+            "total_rows": 2,
+            "processed_rows": 2,
+            "accepted_rows": 2,
+            "rejected_rows": 0,
+            "duplicate_rows": 0
+          },
+          "file": {
+            "id": "c278c53c-69f5-4ded-b1cf-5cfc64aea25d",
+            "name": "nubank.ofx",
+            "size_bytes": 1342,
+            "hash_masked": "965bddef...a318",
+            "status": "processed",
+            "received_at": "2026-08-02T14:33:32.803339+00:00",
+            "processed_at": "2026-08-02T14:34:52.272+00:00"
+          },
+          "financial_account": {
+            "id": "3c4e30f5-d325-43ad-a2a6-baa96c4016bf",
+            "name": "F04E01 Conta Nubank",
+            "account_type": "checking",
+            "masked_account_number": "***1234"
+          },
+          "institution": {
+            "id": "d9774692-c1c4-4c6d-a728-08718beb9929",
+            "name": "Nubank",
+            "normalized_name": "nubank"
+          },
+          "phase": "confirmed",
+          "error_summary": null
+        }
+      ]
+    }
+  },
+  "details": {
+    "ok": true,
+    "status": 200,
+    "data": {
+      "status": "ok",
+      "importacao": {
+        "id": "2bed1d56-54dc-4303-b33f-24f84a5ef678",
+        "status": "completed",
+        "started_at": "2026-08-02T14:33:32.571766+00:00",
+        "finished_at": "2026-08-02T14:34:56.867+00:00",
+        "totals": {
+          "total_rows": 2,
+          "processed_rows": 2,
+          "accepted_rows": 2,
+          "rejected_rows": 0,
+          "duplicate_rows": 0
+        },
+        "processing_summary": {
+          "stage": "confirmed",
+          "period": {
+            "end_date": "2026-07-31",
+            "start_date": "2026-07-01"
+          },
+          "warnings": [],
+          "confirmation": {
+            "created_transactions": 2,
+            "duplicate_at_confirmation": 0
+          },
+          "currency_code": "BRL",
+          "ledger_balance": 2450.12,
+          "ledger_balance_date": "2026-07-31",
+          "institution_detection": {
+            "slug": "nubank",
+            "label": "Nubank",
+            "confidence": "high",
+            "institutionId": "d9774692-c1c4-4c6d-a728-08718beb9929"
+          },
+          "detected_account_identifier": "123456789"
+        },
+        "error_summary": null,
+        "financial_account": {
+          "id": "3c4e30f5-d325-43ad-a2a6-baa96c4016bf",
+          "name": "F04E01 Conta Nubank",
+          "account_type": "checking",
+          "masked_account_number": "***1234",
+          "masked_branch_number": "***1"
+        },
+        "institution": {
+          "id": "d9774692-c1c4-4c6d-a728-08718beb9929",
+          "name": "Nubank",
+          "normalized_name": "nubank"
+        },
+        "files": [
+          {
+            "id": "c278c53c-69f5-4ded-b1cf-5cfc64aea25d",
+            "name": "nubank.ofx",
+            "size_bytes": 1342,
+            "hash_masked": "965bddef...a318",
+            "encoding": "utf8",
+            "status": "processed",
+            "received_at": "2026-08-02T14:33:32.803339+00:00",
+            "processed_at": "2026-08-02T14:34:52.272+00:00"
+          }
+        ],
+        "rows": [
+          {
+            "id": "3f1bb1c2-c36e-4e6b-9b2c-14c46a33b94d",
+            "row_number": 1,
+            "status": "accepted",
+            "occurred_on": "2026-07-15",
+            "description": "Padaria Central - Compra no debito",
+            "amount": -45.9,
+            "fit_id": "nu-001",
+            "error_code": null,
+            "error_message": null,
+            "linked_transaction_id": "da4aca66-a358-4707-924d-02c2476096d6"
+          },
+          {
+            "id": "323612f3-2046-4900-b606-70c8a09b0fad",
+            "row_number": 2,
+            "status": "accepted",
+            "occurred_on": "2026-07-16",
+            "description": "Salario - Credito folha",
+            "amount": 1500,
+            "fit_id": "nu-002",
+            "error_code": null,
+            "error_message": null,
+            "linked_transaction_id": "738e9806-8f46-476b-9ea7-35c727746f91"
+          }
+        ],
+        "rows_truncated": false
+      }
+    }
+  },
+  "dashboard": {
+    "base": {
+      "ok": true,
+      "status": 200,
+      "data": {
+        "status": "ok",
+        "total_registros": 2,
+        "dados": [
+          {
+            "transacao_id": "da4aca66-a358-4707-924d-02c2476096d6",
+            "user_id": "a1d93023-d9f2-4572-bcff-6f370f4101b9",
+            "data": "2026-07-15",
+            "data_competencia": null,
+            "data_postagem": "2026-07-15",
+            "banco": "Nubank",
+            "origem_financeira": "F04E01 Conta Nubank",
+            "contraparte": "Sem contraparte",
+            "categoria": "Sem categoria",
+            "tipo_movimento": "expense",
+            "status_lancamento": "posted",
+            "status_conciliacao": "pending",
+            "origem_transacao": "import",
+            "descricao": "Padaria Central - Compra no debito",
+            "descricao_normalizada": "padaria central - compra no debito",
+            "valor": -45.9,
+            "valor_absoluto": 45.9,
+            "moeda": "BRL",
+            "conta_financeira_id": "3c4e30f5-d325-43ad-a2a6-baa96c4016bf",
+            "cartao_id": null,
+            "contraparte_id": null,
+            "categoria_id": null,
+            "importacao_linha_id": "3f1bb1c2-c36e-4e6b-9b2c-14c46a33b94d",
+            "transacao_vinculada_id": null,
+            "hash_deduplicacao": "45431c1317ed4d11947db38a76d5d6da479b4ef15354fd30a7572a5cb49077e3",
+            "grupo_duplicidade": "fitid:nu-001",
+            "observacoes": null,
+            "criado_em": "2026-08-02T14:33:36.699824+00:00",
+            "atualizado_em": "2026-08-02T14:33:36.699824+00:00",
+            "arquivado_em": null
+          },
+          {
+            "transacao_id": "738e9806-8f46-476b-9ea7-35c727746f91",
+            "user_id": "a1d93023-d9f2-4572-bcff-6f370f4101b9",
+            "data": "2026-07-16",
+            "data_competencia": null,
+            "data_postagem": "2026-07-16",
+            "banco": "Nubank",
+            "origem_financeira": "F04E01 Conta Nubank",
+            "contraparte": "Sem contraparte",
+            "categoria": "Sem categoria",
+            "tipo_movimento": "income",
+            "status_lancamento": "posted",
+            "status_conciliacao": "pending",
+            "origem_transacao": "import",
+            "descricao": "Salario - Credito folha",
+            "descricao_normalizada": "salario - credito folha",
+            "valor": 1500,
+            "valor_absoluto": 1500,
+            "moeda": "BRL",
+            "conta_financeira_id": "3c4e30f5-d325-43ad-a2a6-baa96c4016bf",
+            "cartao_id": null,
+            "contraparte_id": null,
+            "categoria_id": null,
+            "importacao_linha_id": "323612f3-2046-4900-b606-70c8a09b0fad",
+            "transacao_vinculada_id": null,
+            "hash_deduplicacao": "e416fd061dc333ec2ec48b0f7759288f25f8706b604fb1cac109db47995ca5bf",
+            "grupo_duplicidade": "fitid:nu-002",
+            "observacoes": null,
+            "criado_em": "2026-08-02T14:33:36.699824+00:00",
+            "atualizado_em": "2026-08-02T14:33:36.699824+00:00",
+            "arquivado_em": null
+          }
+        ]
+      }
+    },
+    "banco": {
+      "ok": true,
+      "status": 200,
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "user_id": "a1d93023-d9f2-4572-bcff-6f370f4101b9",
+            "banco": "Nubank",
+            "total_gasto": 45.9,
+            "quantidade_transacoes": 1,
+            "periodo_inicial": "2026-07-15",
+            "periodo_final": "2026-07-15"
+          }
+        ]
+      }
+    },
+    "database_transactions": {
+      "count": 2,
+      "linked_rows": 2,
+      "transaction_hashes": 2,
+      "total_amount": 1454.1,
+      "import_row_links_valid": true
+    }
+  },
+  "ownership": {
+    "user_b_cannot_open_user_a_import": {
+      "ok": false,
+      "status": 404,
+      "data": {
+        "erro": "Importacao nao encontrada.",
+        "codigo": "import_not_found"
+      }
+    }
+  },
+  "cleanup": {
+    "synthetic_users_removed": true
+  },
+  "risks": []
+}
