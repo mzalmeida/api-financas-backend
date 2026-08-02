@@ -38,28 +38,43 @@ Fluxo validado com usuario sintetico:
 - backend publico saudavel em `https://api-financas-backend1.onrender.com/health`;
 - HTML publicado contem o botao `Esqueci minha senha` e os estados de recuperacao/redefinicao.
 
-## Bloqueio atual
+## Correcao do redirect hospedado
 
-- o Supabase Auth hospedado ainda esta com `Site URL` e/ou `Redirect URLs` incompletas para o fluxo administrativo de convite/recuperacao;
-- ao gerar link administrativo de recuperacao, o projeto ainda caiu no redirect legado local, evidenciando que a URL publica exata ainda nao esta autorizada no painel;
-- sem esse ajuste, o envio real ao proprietario nao pode ser considerado concluido.
-
-## Acao manual pendente
-
-Ajustar no painel do Supabase Auth:
-
-- `Site URL` = `https://api-financas-frontend.onrender.com`
-- Redirect URLs autorizadas:
+- em 2026-08-02 foi identificado que o campo `Site URL` do Supabase Auth estava salvo incorretamente como `Site URL https://api-financas-frontend.onrender.com`;
+- o valor foi corrigido manualmente no painel para `https://api-financas-frontend.onrender.com`;
+- as Redirect URLs autorizadas permaneceram:
   - `https://api-financas-frontend.onrender.com`
   - `https://api-financas-frontend.onrender.com/`
   - `http://localhost:8080`
   - `http://localhost:8080/`
   - `http://127.0.0.1:8080`
   - `http://127.0.0.1:8080/`
+- o frontend foi endurecido para usar a URL publica canonica em producao;
+- o script administrativo do owner passou a sanitizar qualquer `FRONTEND_URL` invalida ou contaminada por texto adicional.
 
-Depois do ajuste hospedado:
+## Validacao do reenvio real
 
-1. reenviar a recuperacao para o e-mail do proprietario real;
-2. pedir apenas confirmacao de recebimento e definicao da senha;
-3. revalidar login publico final;
-4. encerrar a mesma F03-E02.
+- uma unica nova solicitacao real de recuperacao foi reenviada ao proprietario apos a correcao hospedada;
+- o redirect administrativo final ficou alinhado a `https://api-financas-frontend.onrender.com`;
+- nenhum token, link completo, UUID completo ou conteudo sensivel do e-mail foi registrado;
+- tokens e links anteriormente expostos foram tratados como comprometidos e nao foram reutilizados.
+
+## Validacao final do proprietario real
+
+- o proprietario confirmou a definicao da senha pelo fluxo seguro do Supabase;
+- o owner permaneceu com um unico registro em `public.users`;
+- `auth_provider = 'supabase'`;
+- `auth_subject` permaneceu alinhado ao `sub` do Auth;
+- `profile_code = 'owner'`;
+- `status_code = 'active'`;
+- `email_confirmed` e `last_sign_in_at` ficaram positivos na auditoria final;
+- o login publico abriu normalmente o painel com os botoes principais;
+- a rota `/gastos/banco` respondeu publicamente e exibiu `Nenhum dado encontrado.`, validando o fluxo sem erro funcional.
+
+## Estado final
+
+- F03-E02 concluida em 2026-08-02;
+- `OWNER_PASSWORD` removida do fluxo oficial, do `.env.example` e do script administrativo; remocao no Render informada pelo usuario;
+- login mediado pelo backend preservado;
+- recuperacao e redefinicao executadas diretamente com Supabase Auth no frontend;
+- nenhum secret, senha, token ou link sensivel registrado em documentacao ou commit.

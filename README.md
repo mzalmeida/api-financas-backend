@@ -2,7 +2,7 @@
 
 Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, validar tokens de usuario e consultar as views financeiras no contexto do usuario autenticado.
 
-## Estado da F03-E02
+## Estado final da F03-E02
 
 - `POST /auth/login` autentica no Supabase Auth usando `usuario` + `senha`.
 - `GET /auth/me` valida o `Bearer token` e devolve o contexto minimo de `req.user`.
@@ -78,8 +78,11 @@ Na F03-E02 ele deixou de depender de `OWNER_PASSWORD` e passou a:
 - alinhar metadados e o vinculo em `public.users`;
 - reenviar recuperacao de senha por e-mail sem passar a senha pelo backend.
 
-Bloqueio atual:
-- a URL Configuration hospedada do Supabase Auth ainda precisa ser ajustada no painel para que convites e recuperacoes usem o frontend publico em vez do redirect legado local.
+Conclusao:
+- a URL Configuration hospedada do Supabase Auth foi corrigida;
+- o redirect administrativo final ficou alinhado a `https://api-financas-frontend.onrender.com`;
+- o proprietario definiu a propria senha com sucesso;
+- a remocao de `OWNER_PASSWORD` no Render ficou registrada como informada pelo usuario.
 
 ## Deploy
 
