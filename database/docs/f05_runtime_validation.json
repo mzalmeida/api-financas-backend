@@ -1,0 +1,43 @@
+{
+  "validated_at": "2026-08-02T20:54:14Z",
+  "backend_url": "https://api-financas-backend1.onrender.com",
+  "frontend_url": "https://api-financas-frontend.onrender.com",
+  "real_card_ofx": {
+    "preview_status": 201,
+    "total_rows": 29,
+    "valid_rows": 28,
+    "duplicate_rows": 1,
+    "confirm_status": "completed_with_errors",
+    "created_transactions": 28,
+    "confirm_idempotent": true,
+    "duplicate_rows_on_reimport_preview": 29
+  },
+  "synthetic_bank_regression": {
+    "nubank_preview_status": 201,
+    "nubank_confirm_status": 200,
+    "inter_preview_status": 201,
+    "inter_confirm_status": 200
+  },
+  "salary_rule": {
+    "persisted": true,
+    "movement_type": "income",
+    "category_match": true
+  },
+  "portal_runtime": {
+    "overview_status": 200,
+    "movements_status": 200,
+    "movement_patch_status": 200,
+    "installment_create_status": 201,
+    "installment_link_status": 200,
+    "installment_paid_status": 200,
+    "synthetic_duplicates_total": 2,
+    "duplicate_decision_status": 200
+  },
+  "ownership": {
+    "user_b_sees_only_own_empty_scope": true
+  },
+  "mismatch_guard": {
+    "status": 400,
+    "code": "credit_card_account_required"
+  }
+}
