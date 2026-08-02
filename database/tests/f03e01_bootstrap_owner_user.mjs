@@ -28,6 +28,7 @@ const auth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 });
 
 const sendMode = parseSendMode(process.argv.slice(2));
+const PUBLIC_FRONTEND_URL = "https://api-financas-frontend.onrender.com";
 const redirectTo = resolveRedirectTo();
 
 function maskEmail(email) {
@@ -47,14 +48,21 @@ function parseSendMode(argv) {
 
 function resolveRedirectTo() {
   const normalized = FRONTEND_URL?.trim();
-  if (
-    normalized &&
-    !normalized.includes("localhost") &&
-    !normalized.includes("127.0.0.1")
-  ) {
-    return normalized;
+  if (normalized) {
+    try {
+      const parsed = new URL(normalized);
+      if (
+        (parsed.protocol === "https:" || parsed.protocol === "http:") &&
+        parsed.hostname !== "localhost" &&
+        parsed.hostname !== "127.0.0.1"
+      ) {
+        return `${parsed.protocol}//${parsed.host}`;
+      }
+    } catch {
+      // Fallback seguro para a URL publica canonica quando o valor recebido nao for uma URL valida.
+    }
   }
-  return "https://api-financas-frontend.onrender.com";
+  return PUBLIC_FRONTEND_URL;
 }
 
 function formatMaskedId(value) {
