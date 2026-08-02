@@ -2,7 +2,7 @@
 
 Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, validar tokens de usuario e consultar as views financeiras no contexto do usuario autenticado.
 
-## Estado da F03-E01
+## Estado da F03-E02
 
 - `POST /auth/login` autentica no Supabase Auth usando `usuario` + `senha`.
 - `GET /auth/me` valida o `Bearer token` e devolve o contexto minimo de `req.user`.
@@ -10,6 +10,7 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - `POST /auth/logout` encerra a sessao do usuario autenticado.
 - `GET /gastos/*` usa cliente Supabase com `SUPABASE_ANON_KEY` + `Authorization: Bearer <access_token>`, respeitando RLS.
 - O cliente administrativo com `SUPABASE_SERVICE_ROLE_KEY` permanece isolado para rotinas controladas.
+- O frontend publicado passou a executar recuperacao e redefinicao de senha diretamente com `supabase-js`, usando apenas `SUPABASE_URL` e `SUPABASE_ANON_KEY`.
 - `/health` e a rota canonica. `/health/health` permanece apenas como compatibilidade temporaria.
 
 ## Variaveis de ambiente
@@ -23,7 +24,6 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `JWT_SECRET` somente se alguma dependencia legada residual ainda precisar
 - `OWNER_EMAIL`
-- `OWNER_PASSWORD`
 - `OWNER_DISPLAY_NAME`
 - `OWNER_PROFILE_CODE`
 - `OWNER_STATUS_CODE`
@@ -72,6 +72,15 @@ O script `database/tests/f03e01_bootstrap_owner_user.mjs` existe para preparar o
 
 Ele deve ser executado apenas com variaveis de ambiente seguras e fora do frontend.
 
+Na F03-E02 ele deixou de depender de `OWNER_PASSWORD` e passou a:
+
+- criar o owner por convite administrativo quando o usuario ainda nao existe no Supabase Auth;
+- alinhar metadados e o vinculo em `public.users`;
+- reenviar recuperacao de senha por e-mail sem passar a senha pelo backend.
+
+Bloqueio atual:
+- a URL Configuration hospedada do Supabase Auth ainda precisa ser ajustada no painel para que convites e recuperacoes usem o frontend publico em vez do redirect legado local.
+
 ## Deploy
 
 Repositorio oficial:
@@ -89,3 +98,14 @@ O deploy publico no Render deve usar:
 - `health check path` = `/health`
 
 `SUPABASE_SERVICE_KEY` deve permanecer apenas como alias legado enquanto nao houver prova de remocao completa do ambiente.
+
+## Estado publico da F03-E01-R1
+
+- backend publico validado em `https://api-financas-backend1.onrender.com`
+- `GET /` retorna `200` com `{"status":"API Financas online"}`
+- `GET /health` retorna `200` com status `ok`
+- `GET /health/health` permanece ativo apenas como compatibilidade temporaria
+- o fluxo publico validou login, refresh, logout, CORS e isolamento entre usuarios sinteticos A e B nas rotas `/gastos/*`
+- artefatos da validacao publica:
+  - `database/docs/f03e01_render_rollout_validation.json`
+  - `database/docs/f03e01_render_rollout_validation.md`
