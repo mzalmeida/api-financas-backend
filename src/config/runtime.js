@@ -24,11 +24,18 @@ const allowedOrigins = unique([
   ...parseCommaSeparated(process.env.ADDITIONAL_FRONTEND_ORIGINS),
 ]);
 
+function parseBooleanFlag(value) {
+  return typeof value === "string" && ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
+const gmailIntegrationEnabled = parseBooleanFlag(process.env.GMAIL_INTEGRATION_ENABLED);
+
 function isOriginAllowed(origin) {
   return allowedOrigins.includes(origin);
 }
 
 module.exports = {
   allowedOrigins,
+  gmailIntegrationEnabled,
   isOriginAllowed,
 };

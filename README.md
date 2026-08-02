@@ -26,6 +26,10 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - O parser OFX foi implementado em Node.js puro com suporte local a OFX SGML e XML, incluindo fixtures sinteticas de Nubank e Banco Inter.
 - A analise mascarada dos OFX reais ficou registrada em `database/docs/ofx_real_samples_analysis.md`.
 - Testes automatizados locais atuais: `npm test` cobre o parser OFX com fixtures sinteticas.
+- A integracao Gmail/Google OAuth foi adiada por decisao do usuario nesta etapa.
+- As tabelas `gmail_integrations` e `gmail_messages`, a migration 092 e os servicos relacionados permanecem apenas como infraestrutura futura inativa, sem uso no fluxo oficial atual.
+- O backend sobe de forma saudavel sem `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` e `GMAIL_TOKEN_SECRET`.
+- A solucao adotada para esta passada foi nao montar `/integrations/gmail` enquanto `GMAIL_INTEGRATION_ENABLED` nao estiver explicitamente habilitada.
 
 ## Variaveis de ambiente
 
@@ -36,6 +40,7 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `GMAIL_INTEGRATION_ENABLED` opcional; manter ausente ou `false` enquanto a automacao por e-mail estiver adiada
 - `JWT_SECRET` somente se alguma dependencia legada residual ainda precisar
 - `OWNER_EMAIL`
 - `OWNER_DISPLAY_NAME`
