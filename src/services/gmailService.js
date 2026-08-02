@@ -9,6 +9,7 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI || "";
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://api-financas-frontend.onrender.com";
+const EXPECTED_PUBLIC_GOOGLE_REDIRECT_URI = "https://api-financas-backend1.onrender.com/integrations/gmail/callback";
 const STATE_TTL_MINUTES = 15;
 const OAUTH_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -53,6 +54,13 @@ function maskEmail(email) {
 function ensureGoogleConfigured() {
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REDIRECT_URI) {
     throw new GmailIntegrationError(409, "google_oauth_not_configured", "A integracao Gmail ainda nao esta configurada no ambiente.");
+  }
+
+  if (
+    String(process.env.NODE_ENV || "").toLowerCase() === "production"
+    && GOOGLE_REDIRECT_URI !== EXPECTED_PUBLIC_GOOGLE_REDIRECT_URI
+  ) {
+    throw new GmailIntegrationError(409, "invalid_google_redirect_uri", "A URL publica de callback do Gmail esta divergente da configuracao esperada.");
   }
 
   if (!gmailCryptoConfigured()) {
@@ -135,6 +143,7 @@ function buildGoogleAuthUrl(state) {
 }
 
 async function getGmailStatus(authUserId) {
+  ensureGoogleConfigured();
   const appUser = await resolveCurrentAppUser(authUserId);
   const integration = await getIntegrationByUserId(appUser.id);
   const { data: accounts, error: accountsError } = await adminSupabaseClient

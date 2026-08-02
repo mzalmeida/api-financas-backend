@@ -24,7 +24,7 @@ app.use(cors({
 app.use(express.json());
 
 app.get("/", (req, res) => {
-  res.json({ status: "API Financas online" });
+  res.json({ status: "RebeccaCash API online" });
 });
 
 app.get("/auth", (req, res) => {
@@ -36,15 +36,23 @@ app.get("/auth", (req, res) => {
 });
 
 app.use("/health", healthRoutes);
-app.use("/auth", authRoutes);
-app.use("/gastos", gastosRoutes);
-app.use("/imports", importsRoutes);
-app.use("/portal", portalRoutes);
 
 if (gmailIntegrationEnabled) {
   const gmailRoutes = require("./routes/gmail");
   app.use("/integrations/gmail", gmailRoutes);
 }
+
+app.use("/auth", authRoutes);
+app.use("/portal", portalRoutes);
+app.use("/imports", importsRoutes);
+app.use("/gastos", gastosRoutes);
+
+app.use((req, res) => {
+  res.status(404).json({
+    erro: "Rota nao encontrada",
+    codigo: "route_not_found",
+  });
+});
 
 app.use((error, req, res, next) => {
   if (error?.message === "Origin not allowed by CORS") {

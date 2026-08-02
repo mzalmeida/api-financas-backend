@@ -1,4 +1,4 @@
-# API Financas - Backend
+# RebeccaCash - Backend
 
 Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, validar tokens de usuario e consultar as views financeiras no contexto do usuario autenticado.
 
@@ -39,6 +39,20 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - `GET|POST|PUT|DELETE /portal/catalog/:entity` cria a camada real de CRUD para `accounts`, `categories`, `cards`, `counterparties` e `institutions`.
 - O backend passou a sustentar o menu completo do frontend 1.0 sem depender de componentes ilustrativos ou rotas vazias.
 - A validacao `npm run validate:f04e01` continuou aprovada apos a introducao das novas rotas de portal, preservando o fluxo OFX homologado.
+
+## Estado local da F04-E01-R2
+
+- a integracao Gmail voltou a ser tratada como feature ativa do RebeccaCash, protegida por `GMAIL_INTEGRATION_ENABLED`;
+- `/integrations/gmail/status` passou a ser coberta por testes automatizados de roteamento, inclusive nos cenarios com feature ligada e desligada;
+- o backend ganhou `404` controlado com JSON para impedir regressao para o fallback HTML padrao do Express;
+- a validacao publica em `2026-08-02` confirmou:
+  - `/health` -> `200`;
+  - `/health/health` -> `200`;
+  - `/integrations/gmail/status` sem token -> `401 missing_token`;
+  - rota inexistente -> `404`;
+- `src/services/gmailService.js` passou a validar configuracao minima do OAuth e a URL publica de callback em ambiente `production`;
+- a criptografia AES-256-GCM do refresh token ganhou testes dedicados em `test/gmailCrypto.test.js`;
+- o roteamento principal ganhou testes dedicados em `test/routing.test.js`.
 
 ## Variaveis de ambiente
 
