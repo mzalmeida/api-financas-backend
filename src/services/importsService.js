@@ -1,11 +1,12 @@
 const crypto = require("crypto");
 const { adminSupabaseClient } = require("../config/supabaseClients");
 const { parseOfxBuffer, normalizeText, inferMovementType } = require("./ofxParser");
+const { applyClassificationRuleSet } = require("./transactionClassificationService");
 
 const MAX_PREVIEW_ROWS = 50;
 const HISTORY_LIMIT = 20;
 const PREVIEW_STAGE = "pending_confirmation";
-const SUPPORTED_ACCOUNT_TYPES = new Set(["checking", "savings", "investment", "payment", "cash", "other"]);
+const SUPPORTED_ACCOUNT_TYPES = new Set(["checking", "savings", "investment", "payment", "cash", "other", "wallet", "manual", "credit_card"]);
 const SUPPORTED_IMPORT_STATUSES = new Set(["pending", "pending_confirmation", "processing", "completed", "completed_with_errors", "failed", "cancelled"]);
 
 class ImportFlowError extends Error {
@@ -129,7 +130,7 @@ async function listImportOptions(client, authUserId) {
       .order("name"),
     client
       .from("financial_accounts")
-      .select("id,name,account_type,currency_code,external_identifier,masked_account_number,masked_branch_number,financial_institution_id,is_active")
+      .select("id,name,account_type,currency_code,external_identifier,masked_account_number,masked_branch_number,financial_institution_id,is_active,opening_balance,statement_closing_day,statement_due_day,credit_limit_amount,statement_label")
       .eq("user_id", appUser.id)
       .eq("is_active", true)
       .is("archived_at", null)
@@ -140,18 +141,13 @@ async function listImportOptions(client, authUserId) {
     throw new ImportFlowError(502, "supabase_query_error", "Falha ao consultar instituicoes e contas.");
   }
 
-  const institutions = institutionsResult.data.filter((item) => {
-    const normalized = normalizeText(item.normalized_name || item.name);
-    return normalized.includes("nubank") || normalized.includes("inter");
-  });
-
   return {
     user: {
       id: appUser.id,
       email: appUser.email,
       display_name: appUser.display_name,
     },
-    institutions,
+    institutions: institutionsResult.data,
     accounts: accountsResult.data,
   };
 }
@@ -164,6 +160,12 @@ async function createFinancialAccount(client, authUserId, payload) {
   const externalIdentifier = String(payload?.externalIdentifier ?? "").trim() || null;
   const maskedAccountNumber = String(payload?.maskedAccountNumber ?? "").trim() || null;
   const maskedBranchNumber = String(payload?.maskedBranchNumber ?? "").trim() || null;
+  const statementClosingDay = payload?.statementClosingDay ? Number.parseInt(payload.statementClosingDay, 10) : null;
+  const statementDueDay = payload?.statementDueDay ? Number.parseInt(payload.statementDueDay, 10) : null;
+  const creditLimitAmount = payload?.creditLimitAmount != null && payload.creditLimitAmount !== ""
+    ? Number(payload.creditLimitAmount)
+    : null;
+  const statementLabel = String(payload?.statementLabel ?? "").trim() || null;
 
   if (!name) {
     throw new ImportFlowError(400, "financial_account_required", "Informe um nome para a conta financeira.");
@@ -175,6 +177,10 @@ async function createFinancialAccount(client, authUserId, payload) {
 
   if (!SUPPORTED_ACCOUNT_TYPES.has(accountType)) {
     throw new ImportFlowError(400, "invalid_account_type", "Tipo de conta financeira invalido.");
+  }
+
+  if (accountType === "credit_card" && (!statementClosingDay || !statementDueDay)) {
+    throw new ImportFlowError(400, "credit_card_statement_required", "Informe fechamento e vencimento para contas de cartao de credito.");
   }
 
   const { data: existingByName, error: existingByNameError } = await client
@@ -221,9 +227,13 @@ async function createFinancialAccount(client, authUserId, payload) {
       masked_branch_number: maskedBranchNumber,
       opening_balance: 0,
       currency_code: "BRL",
+      statement_closing_day: statementClosingDay,
+      statement_due_day: statementDueDay,
+      credit_limit_amount: Number.isFinite(creditLimitAmount) ? creditLimitAmount : null,
+      statement_label: statementLabel,
       is_active: true,
     })
-    .select("id,name,account_type,currency_code,external_identifier,masked_account_number,masked_branch_number,financial_institution_id,is_active")
+    .select("id,name,account_type,currency_code,external_identifier,masked_account_number,masked_branch_number,financial_institution_id,is_active,opening_balance,statement_closing_day,statement_due_day,credit_limit_amount,statement_label")
     .single();
 
   if (error || !data) {
@@ -563,6 +573,14 @@ async function previewOfxImport(client, authUserId, payload, file) {
   const context = await resolvePreviewContext(client, authUserId, payload);
   const parsed = parseOfxBuffer(file.buffer, context.institutions);
 
+  if (parsed.header.statementKind === "credit_card" && context.account.account_type !== "credit_card") {
+    throw new ImportFlowError(400, "credit_card_account_required", "Extratos de cartao de credito devem ser vinculados a uma conta do tipo cartao de credito.");
+  }
+
+  if (parsed.header.statementKind === "bank_account" && context.account.account_type === "credit_card") {
+    throw new ImportFlowError(400, "bank_account_required", "Extratos bancarios nao podem ser vinculados a uma conta de cartao de credito.");
+  }
+
   if (!parsed.transactions.length) {
     throw new ImportFlowError(400, "no_transactions_found", "Nenhum lancamento OFX foi encontrado no arquivo enviado.");
   }
@@ -763,22 +781,29 @@ async function getImportDetails(client, authUserId, importId) {
   };
 }
 
-function buildTransactionPayload(appUserId, importRow, importRecord) {
+async function buildTransactionPayload(client, appUserId, importRow, importRecord) {
   const normalizedPayload = importRow.normalized_payload || {};
   const amount = Number(importRow.extracted_amount);
   const description = importRow.extracted_description;
   const movementType = normalizedPayload.movement_type || inferMovementType(null, amount, description);
+  const classification = await applyClassificationRuleSet(client, appUserId, {
+    description,
+    memo: importRow.raw_payload?.memo,
+    name: importRow.raw_payload?.name,
+    fitId: importRow.extracted_external_identifier,
+    movementType,
+  });
 
   return {
     user_id: appUserId,
     financial_account_id: importRecord.financial_account_id,
     card_id: null,
-    counterparty_id: null,
-    category_id: null,
+    counterparty_id: classification.counterparty_id,
+    category_id: classification.category_id,
     import_row_id: importRow.id,
     linked_transaction_id: null,
     transaction_source: "import",
-    movement_type: movementType,
+    movement_type: classification.movement_type,
     posting_status: "posted",
     reconciliation_status: "pending",
     occurred_on: importRow.extracted_occurrence_date,
@@ -790,7 +815,7 @@ function buildTransactionPayload(appUserId, importRow, importRecord) {
     currency_code: importRecord.processing_summary?.currency_code || "BRL",
     dedup_hash: normalizedPayload.dedup_hash,
     duplicate_group_key: normalizedPayload.duplicate_group_key,
-    notes: null,
+    notes: classification.matched_rule_name ? `Classificado automaticamente por regra: ${classification.matched_rule_name}` : null,
   };
 }
 
@@ -848,7 +873,7 @@ async function confirmImport(client, authUserId, payload) {
   const fileIds = importFiles.map((item) => item.id);
   const { data: importRows, error: rowsError } = await client
     .from("import_rows")
-    .select("id,source_order,processing_status,processing_error_code,processing_error_message,extracted_occurrence_date,extracted_description,extracted_amount,extracted_external_identifier,normalized_payload,linked_transaction_id")
+    .select("id,source_order,processing_status,processing_error_code,processing_error_message,extracted_occurrence_date,extracted_description,extracted_amount,extracted_external_identifier,normalized_payload,raw_payload,linked_transaction_id")
     .in("import_file_id", fileIds)
     .order("source_order", { ascending: true });
 
@@ -871,8 +896,8 @@ async function confirmImport(client, authUserId, payload) {
   const toInsert = [];
   const duplicateRows = [];
 
-  candidateRows.forEach((row) => {
-    const payloadRow = buildTransactionPayload(appUser.id, row, importRecord);
+  for (const row of candidateRows) {
+    const payloadRow = await buildTransactionPayload(client, appUser.id, row, importRecord);
     const duplicateMatch = payloadRow.dedup_hash && existingTransactions.byHash.get(payloadRow.dedup_hash)
       ? existingTransactions.byHash.get(payloadRow.dedup_hash)
       : payloadRow.duplicate_group_key && existingTransactions.byKey.get(payloadRow.duplicate_group_key)
@@ -881,11 +906,11 @@ async function confirmImport(client, authUserId, payload) {
 
     if (duplicateMatch) {
       duplicateRows.push({ row, duplicateMatch });
-      return;
+      continue;
     }
 
     toInsert.push(payloadRow);
-  });
+  }
 
   let insertedTransactions = [];
   if (toInsert.length > 0) {

@@ -4,13 +4,13 @@ const INSTITUTION_RULES = [
   {
     slug: "nubank",
     normalizedNames: ["nubank"],
-    names: ["nubank", "nu pagamentos", "nu bank"],
-    codes: ["260"],
+    names: ["nubank", "nu pagamentos", "nu pagamentos s.a.", "nu bank"],
+    codes: ["260", "0260"],
   },
   {
     slug: "inter",
     normalizedNames: ["banco inter", "inter"],
-    names: ["banco inter", "inter"],
+    names: ["banco inter", "inter", "intermedium"],
     codes: ["077"],
   },
 ];
@@ -24,19 +24,48 @@ function normalizeText(value) {
     .toLowerCase();
 }
 
+function parseOfxHeaders(buffer) {
+  const rawHeaderText = Buffer.from(buffer)
+    .toString("latin1")
+    .split(/<OFX>/i)[0]
+    .replace(/\r\n?/g, "\n");
+
+  const headers = {};
+  rawHeaderText.split("\n").forEach((line) => {
+    const match = /^([A-Z0-9_]+):(.*)$/.exec(line.trim());
+    if (!match) return;
+    headers[match[1]] = match[2].trim();
+  });
+  return headers;
+}
+
 function decodeOfxBuffer(buffer) {
+  const headers = parseOfxHeaders(buffer);
+  const headerEncoding = normalizeText(headers.ENCODING);
+  const headerCharset = normalizeText(headers.CHARSET);
+
+  if (headerCharset === "1252" || headerEncoding === "usascii") {
+    return {
+      text: Buffer.from(buffer).toString("latin1"),
+      encoding: "windows-1252",
+      headers,
+    };
+  }
+
   const utf8 = Buffer.from(buffer).toString("utf8");
   const replacementCount = (utf8.match(/\uFFFD/g) || []).length;
   if (replacementCount > 3) {
     return {
       text: Buffer.from(buffer).toString("latin1"),
       encoding: "latin1",
+      headers,
     };
   }
 
   return {
     text: utf8,
     encoding: "utf8",
+    headers,
   };
 }
 
@@ -88,6 +117,12 @@ function parseOfxDate(rawValue) {
   return `${year}-${month}-${day}`;
 }
 
+function parseTimezone(rawValue) {
+  if (!rawValue) return null;
+  const match = String(rawValue).match(/\[([^\]]+)\]/);
+  return match ? match[1] : null;
+}
+
 function parseNumericAmount(rawValue) {
   if (rawValue == null) return null;
   const normalized = String(rawValue).replace(/,/g, ".").trim();
@@ -118,6 +153,16 @@ function inferMovementType(trnType, amount, description) {
 
 function buildRowHash(payload) {
   return crypto.createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+}
+
+function detectStatementKind(text) {
+  if (/<CREDITCARDMSGSRSV1>/i.test(text) || /<CCSTMTRS>/i.test(text)) {
+    return "credit_card";
+  }
+  if (/<BANKMSGSRSV1>/i.test(text) || /<STMTRS>/i.test(text)) {
+    return "bank_account";
+  }
+  return "unknown";
 }
 
 function detectInstitution(rawText, header, institutions = []) {
@@ -156,7 +201,16 @@ function detectInstitution(rawText, header, institutions = []) {
   };
 }
 
-function parseTransactions(blocks) {
+function extractInstallmentMetadata(description) {
+  const match = String(description ?? "").match(/parcela\s+(\d+)\s*\/\s*(\d+)/i);
+  if (!match) return null;
+  return {
+    current: Number.parseInt(match[1], 10),
+    total: Number.parseInt(match[2], 10),
+  };
+}
+
+function parseTransactions(blocks, statementKind) {
   return blocks.map((block, index) => {
     const trnType = extractTagValue(block, "TRNTYPE");
     const name = extractTagValue(block, "NAME");
@@ -164,8 +218,10 @@ function parseTransactions(blocks) {
     const refNum = extractTagValue(block, "REFNUM");
     const description = compactDescription(name, memo);
     const amount = parseNumericAmount(extractTagValue(block, "TRNAMT"));
-    const postedOn = parseOfxDate(extractTagValue(block, "DTPOSTED"));
-    const userDate = parseOfxDate(extractTagValue(block, "DTUSER"));
+    const rawPosted = extractTagValue(block, "DTPOSTED");
+    const rawUser = extractTagValue(block, "DTUSER");
+    const postedOn = parseOfxDate(rawPosted);
+    const userDate = parseOfxDate(rawUser);
     const transaction = {
       rowNumber: index + 1,
       trnType,
@@ -178,12 +234,14 @@ function parseTransactions(blocks) {
       name,
       memo,
       description,
+      statementKind,
       movementType: inferMovementType(trnType, amount, description),
+      installment: extractInstallmentMetadata(description),
       rawData: {
         trnType,
         trnAmt: extractTagValue(block, "TRNAMT"),
-        dtPosted: extractTagValue(block, "DTPOSTED"),
-        dtUser: extractTagValue(block, "DTUSER"),
+        dtPosted: rawPosted,
+        dtUser: rawUser,
         fitId: extractTagValue(block, "FITID"),
         checkNum: extractTagValue(block, "CHECKNUM"),
         refNum,
@@ -200,10 +258,18 @@ function parseTransactions(blocks) {
 function parseOfxBuffer(buffer, institutions = []) {
   const decoded = decodeOfxBuffer(buffer);
   const text = normalizeOfxText(decoded.text);
+  const statementKind = detectStatementKind(text);
   const transactionBlocks = extractAllBlocks(text, "STMTTRN");
-  const transactions = parseTransactions(transactionBlocks);
+  const transactions = parseTransactions(transactionBlocks, statementKind);
 
   const header = {
+    ofxHeader: decoded.headers.OFXHEADER || null,
+    data: decoded.headers.DATA || null,
+    version: decoded.headers.VERSION || null,
+    security: decoded.headers.SECURITY || null,
+    headerEncoding: decoded.headers.ENCODING || null,
+    headerCharset: decoded.headers.CHARSET || null,
+    statementKind,
     org: extractTagValue(text, "ORG"),
     fid: extractTagValue(text, "FID"),
     bankId: extractTagValue(text, "BANKID"),
@@ -213,10 +279,15 @@ function parseOfxBuffer(buffer, institutions = []) {
     curDef: extractTagValue(text, "CURDEF") || "BRL",
     startDate: parseOfxDate(extractTagValue(text, "DTSTART")),
     endDate: parseOfxDate(extractTagValue(text, "DTEND")),
+    startTimezone: parseTimezone(extractTagValue(text, "DTSTART")),
+    endTimezone: parseTimezone(extractTagValue(text, "DTEND")),
     ledgerBalance: parseNumericAmount(extractTagValue(text, "BALAMT")),
     ledgerAsOf: parseOfxDate(extractTagValue(text, "DTASOF")),
     availableBalance: parseNumericAmount(extractTagValue(text, "AVAILBAL")),
     availableAsOf: parseOfxDate(extractTagValue(text, "DTASOF")),
+    serverDate: parseOfxDate(extractTagValue(text, "DTSERVER")),
+    serverTimezone: parseTimezone(extractTagValue(text, "DTSERVER")),
+    language: extractTagValue(text, "LANGUAGE"),
   };
 
   const detection = detectInstitution(text, header, institutions);
@@ -228,6 +299,10 @@ function parseOfxBuffer(buffer, institutions = []) {
 
   if (!detection.institutionId) {
     warnings.push("Instituicao nao detectada automaticamente.");
+  }
+
+  if (statementKind === "credit_card") {
+    warnings.push("Extrato identificado como cartao de credito; nao deve ser mesclado ao saldo disponivel.");
   }
 
   return {
@@ -247,4 +322,5 @@ module.exports = {
   parseNumericAmount,
   compactDescription,
   inferMovementType,
+  detectStatementKind,
 };

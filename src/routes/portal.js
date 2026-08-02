@@ -4,7 +4,6 @@ const requireSupabaseAuth = require("../middlewares/requireSupabaseAuth");
 const { createSupabaseUserClient } = require("../config/supabaseClients");
 const {
   PortalServiceError,
-  getOverview,
   listCatalog,
   createCatalogItem,
   updateCatalogItem,
@@ -13,6 +12,15 @@ const {
   updateProfile,
   updateSettings,
 } = require("../services/portalService");
+const {
+  FinanceExperienceError,
+  getFinanceOverview,
+  listMovements,
+  listDuplicateMovements,
+  listInstallmentPlans,
+  createInstallmentPlan,
+  linkInstallmentItem,
+} = require("../services/financeExperienceService");
 
 const router = express.Router();
 
@@ -22,6 +30,14 @@ function buildClient(req) {
 
 function sendKnownError(res, error) {
   if (error instanceof PortalServiceError) {
+    return res.status(error.status).json({
+      erro: error.message,
+      codigo: error.code,
+      detalhes: error.details ?? undefined,
+    });
+  }
+
+  if (error instanceof FinanceExperienceError) {
     return res.status(error.status).json({
       erro: error.message,
       codigo: error.code,
@@ -45,8 +61,33 @@ async function run(res, handler) {
 }
 
 router.get("/overview", requireSupabaseAuth, async (req, res) => run(res, async () => {
-  const data = await getOverview(buildClient(req), req.user.authUserId);
+  const data = await getFinanceOverview(buildClient(req), req.user.authUserId, req.query);
   res.json({ status: "ok", ...data });
+}));
+
+router.get("/movements", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const data = await listMovements(buildClient(req), req.user.authUserId, req.query);
+  res.json({ status: "ok", ...data });
+}));
+
+router.get("/duplicates", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const data = await listDuplicateMovements(buildClient(req), req.user.authUserId, req.query);
+  res.json({ status: "ok", ...data });
+}));
+
+router.get("/installments", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const items = await listInstallmentPlans(buildClient(req), req.user.authUserId);
+  res.json({ status: "ok", items });
+}));
+
+router.post("/installments", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const item = await createInstallmentPlan(buildClient(req), req.user.authUserId, req.body);
+  res.status(201).json({ status: "ok", item });
+}));
+
+router.post("/installments/:planId/items/:itemId/link", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const item = await linkInstallmentItem(buildClient(req), req.user.authUserId, req.params.planId, req.params.itemId, req.body);
+  res.json({ status: "ok", item });
 }));
 
 router.get("/profile", requireSupabaseAuth, async (req, res) => run(res, async () => {

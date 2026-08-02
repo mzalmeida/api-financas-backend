@@ -14,7 +14,7 @@ const ENTITY_CONFIG = {
     table: "financial_accounts",
     ownership: "user",
     defaultSort: { column: "name", ascending: true },
-    select: "id,user_id,financial_institution_id,name,account_type,currency_code,external_identifier,masked_account_number,masked_branch_number,opening_balance,opening_balance_date,is_active,created_at,updated_at,archived_at",
+    select: "id,user_id,financial_institution_id,name,account_type,currency_code,external_identifier,masked_account_number,masked_branch_number,opening_balance,opening_balance_date,statement_closing_day,statement_due_day,credit_limit_amount,statement_label,is_active,created_at,updated_at,archived_at",
     searchColumns: ["name", "external_identifier", "masked_account_number"],
     normalize(payload) {
       return {
@@ -27,6 +27,10 @@ const ENTITY_CONFIG = {
         masked_branch_number: optionalText(payload?.masked_branch_number ?? payload?.maskedBranchNumber),
         opening_balance: normalizeNumber(payload?.opening_balance ?? payload?.openingBalance ?? 0),
         opening_balance_date: optionalText(payload?.opening_balance_date ?? payload?.openingBalanceDate),
+        statement_closing_day: normalizeNullableInteger(payload?.statement_closing_day ?? payload?.statementClosingDay),
+        statement_due_day: normalizeNullableInteger(payload?.statement_due_day ?? payload?.statementDueDay),
+        credit_limit_amount: normalizeNullableNumber(payload?.credit_limit_amount ?? payload?.creditLimitAmount),
+        statement_label: optionalText(payload?.statement_label ?? payload?.statementLabel),
         is_active: payload?.is_active ?? payload?.isActive ?? true,
       };
     },
@@ -36,6 +40,9 @@ const ENTITY_CONFIG = {
       }
       if (!payload.account_type) {
         throw new PortalServiceError(400, "validation_error", "Informe o tipo da conta.");
+      }
+      if (payload.account_type === "credit_card" && (!payload.statement_closing_day || !payload.statement_due_day)) {
+        throw new PortalServiceError(400, "validation_error", "Informe fechamento e vencimento para conta de cartao.");
       }
     },
   },
@@ -170,6 +177,12 @@ function normalizeNullableInteger(value) {
 function normalizeNumber(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeNullableNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function normalizeColor(value) {

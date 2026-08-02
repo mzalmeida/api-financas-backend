@@ -15,7 +15,7 @@ test("parseia OFX SGML do Nubank com datas, valores e FITID", () => {
   const file = fs.readFileSync(path.join(fixtureDir, "nubank.ofx"));
   const result = parseOfxBuffer(file, institutions);
 
-  assert.equal(result.encoding, "utf8");
+  assert.equal(result.encoding, "windows-1252");
   assert.equal(result.detection.slug, "nubank");
   assert.equal(result.header.startDate, "2026-07-01");
   assert.equal(result.header.endDate, "2026-07-31");
@@ -39,6 +39,24 @@ test("parseia OFX do Inter com TRNTYPE de transferencia", () => {
   assert.equal(result.transactions[0].occurredOn, "2026-07-17");
   assert.equal(result.transactions[0].amount, -250);
   assert.equal(result.transactions[0].movementType, "transfer");
+});
+
+test("detecta OFX de cartao Nubank sem depender do nome do arquivo", () => {
+  const file = fs.readFileSync(path.join(fixtureDir, "nubank-credit-card.ofx"));
+  const result = parseOfxBuffer(file, institutions);
+
+  assert.equal(result.encoding, "windows-1252");
+  assert.equal(result.detection.slug, "nubank");
+  assert.equal(result.header.statementKind, "credit_card");
+  assert.equal(result.header.accountId, "card-synthetic-001");
+  assert.equal(result.header.startDate, "2026-07-03");
+  assert.equal(result.header.endDate, "2026-08-03");
+  assert.equal(result.header.ledgerBalance, -1306.11);
+  assert.equal(result.transactions.length, 3);
+  assert.equal(result.transactions[0].movementType, "expense");
+  assert.deepEqual(result.transactions[0].installment, { current: 2, total: 8 });
+  assert.equal(result.transactions[1].movementType, "income");
+  assert.match(result.warnings.join(" "), /cartao de credito/i);
 });
 
 test("mantem OFX sem FITID e usa apenas MEMO na descricao quando necessario", () => {

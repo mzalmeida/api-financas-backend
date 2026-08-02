@@ -54,6 +54,21 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - a criptografia AES-256-GCM do refresh token ganhou testes dedicados em `test/gmailCrypto.test.js`;
 - o roteamento principal ganhou testes dedicados em `test/routing.test.js`.
 
+## Estado local da F05
+
+- `src/services/ofxParser.js` passou a detectar extratos de conta e cartao pelo envelope OFX;
+- `src/services/importsService.js` agora valida compatibilidade entre o tipo do OFX e a conta financeira de destino;
+- `src/services/financeExperienceService.js` concentra overview, movimentacoes, duplicidades e parcelamentos;
+- `src/services/transactionClassificationService.js` aplica regras de classificacao automatica na confirmacao da importacao;
+- novas migrations F05:
+  - `20260802_093__expand_financial_accounts_for_f05.sql`
+  - `20260802_094__create_installment_plans.sql`
+  - `20260802_095__create_installment_plan_items.sql`
+  - `20260802_096__create_transaction_classification_rules.sql`
+  - `20260802_097__secure_f05_tables.sql`
+- novas fixtures e testes cobrem OFX sintetico de cartao Nubank;
+- `npm test` fecha com 20 testes aprovados.
+
 ## Variaveis de ambiente
 
 - `NODE_ENV`
