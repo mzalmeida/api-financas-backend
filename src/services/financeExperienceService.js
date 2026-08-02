@@ -23,6 +23,10 @@ function optionalText(value) {
   return text || null;
 }
 
+function roundCurrency(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+}
+
 function parseDate(value) {
   if (!value) return null;
   const date = new Date(`${String(value).slice(0, 10)}T12:00:00Z`);
@@ -59,6 +63,46 @@ async function resolveCurrentAppUser(client, authUserId) {
   return data;
 }
 
+async function ensureOwnedTransaction(client, appUserId, transactionId) {
+  if (!transactionId) return null;
+  const { data, error } = await client
+    .from("transactions")
+    .select("id,user_id")
+    .eq("id", transactionId)
+    .eq("user_id", appUserId)
+    .maybeSingle();
+
+  if (error) {
+    throw new FinanceExperienceError(502, "supabase_query_error", "Falha ao localizar a movimentacao informada.");
+  }
+
+  if (!data?.id) {
+    throw new FinanceExperienceError(404, "transaction_not_found", "Movimentacao informada nao foi localizada.");
+  }
+
+  return data;
+}
+
+async function ensureOwnedCategory(client, appUserId, categoryId) {
+  if (!categoryId) return null;
+  const { data, error } = await client
+    .from("categories")
+    .select("id,user_id")
+    .eq("id", categoryId)
+    .or(`user_id.eq.${appUserId},user_id.is.null`)
+    .maybeSingle();
+
+  if (error) {
+    throw new FinanceExperienceError(502, "supabase_query_error", "Falha ao localizar a categoria informada.");
+  }
+
+  if (!data?.id) {
+    throw new FinanceExperienceError(404, "category_not_found", "Categoria informada nao foi localizada.");
+  }
+
+  return data;
+}
+
 function buildFilters(query = {}) {
   const competence = optionalText(query.competence) || startOfMonthIso().slice(0, 7);
   return {
@@ -74,6 +118,22 @@ function buildFilters(query = {}) {
     page: Math.max(1, Number.parseInt(query.page, 10) || 1),
     pageSize: Math.min(100, Math.max(1, Number.parseInt(query.pageSize, 10) || 20)),
   };
+}
+
+function accountTypeLabel(value) {
+  const labels = {
+    checking: "Conta corrente",
+    savings: "Poupanca",
+    payment: "Conta de pagamento",
+    wallet: "Carteira",
+    manual: "Conta manual",
+    credit_card: "Cartao de credito",
+    investment: "Investimento",
+    cash: "Dinheiro",
+    other: "Outra conta",
+  };
+
+  return labels[value] || "Conta financeira";
 }
 
 function applyTransactionFilters(rows, filters) {
@@ -129,6 +189,7 @@ function computeAccountBalances(accounts, transactions) {
       id: account.id,
       name: account.name,
       account_type: account.account_type,
+      account_type_label: accountTypeLabel(account.account_type),
       institution_name: account.financial_institution?.name ?? "Sem instituicao",
       current_balance: Number(balance.toFixed(2)),
       statement_closing_day: account.statement_closing_day,
@@ -158,6 +219,15 @@ function getCycleWindow(referenceDate, closingDay) {
     closedStart: formatDate(closedStart),
     closedEnd: formatDate(currentClosing),
   };
+}
+
+function buildSafeMonthDate(baseDate, monthOffset) {
+  const year = baseDate.getUTCFullYear();
+  const month = baseDate.getUTCMonth() + monthOffset;
+  const targetMonthStart = new Date(Date.UTC(year, month, 1));
+  const lastDay = new Date(Date.UTC(targetMonthStart.getUTCFullYear(), targetMonthStart.getUTCMonth() + 1, 0)).getUTCDate();
+  const day = Math.min(baseDate.getUTCDate(), lastDay);
+  return new Date(Date.UTC(targetMonthStart.getUTCFullYear(), targetMonthStart.getUTCMonth(), day));
 }
 
 function buildCardSummary(accounts, transactions, competence) {
@@ -328,6 +398,7 @@ async function getFinanceOverview(client, authUserId, query = {}) {
         id: account.id,
         name: account.name,
         account_type: account.account_type,
+        account_type_label: account.account_type_label,
       })),
     },
     metrics: {
@@ -365,7 +436,9 @@ async function listMovements(client, authUserId, query = {}) {
   const accounts = accountsResult.data ?? [];
   const rows = applyTransactionFilters((data ?? []).map((row) => ({
     ...row,
+    id: row.transacao_id,
     tipo_conta: accounts.find((item) => item.id === row.conta_financeira_id)?.account_type ?? "other",
+    tipo_conta_label: accountTypeLabel(accounts.find((item) => item.id === row.conta_financeira_id)?.account_type ?? "other"),
     conta_nome: accounts.find((item) => item.id === row.conta_financeira_id)?.name ?? row.origem_financeira ?? null,
   })), filters);
 
@@ -406,10 +479,16 @@ async function listDuplicateMovements(client, authUserId, query = {}) {
   const merged = (duplicatesResult.data ?? []).map((row) => ({
     ...row,
     ...(baseById.get(row.transacao_id) ?? {}),
+    id: row.transacao_id,
     tipo_conta: accounts.find((item) => item.id === (baseById.get(row.transacao_id) ?? {}).conta_financeira_id)?.account_type ?? "other",
+    tipo_conta_label: accountTypeLabel(accounts.find((item) => item.id === (baseById.get(row.transacao_id) ?? {}).conta_financeira_id)?.account_type ?? "other"),
     conta_nome: accounts.find((item) => item.id === (baseById.get(row.transacao_id) ?? {}).conta_financeira_id)?.name
       ?? (baseById.get(row.transacao_id) ?? {}).origem_financeira
       ?? null,
+    duplicate_group: row.grupo_duplicidade,
+    duplicate_rule: row.motivo_flag,
+    duplicate_score: row.score_duplicidade,
+    status: (baseById.get(row.transacao_id) ?? {}).status_conciliacao ?? "pending",
   }));
   const filtered = applyTransactionFilters(merged, { ...filters, duplicateOnly: false });
 
@@ -458,7 +537,7 @@ function generateInstallmentItems(firstDueDate, installmentCount, installmentAmo
   const base = parseDate(firstDueDate);
   if (!base) return [];
   return Array.from({ length: installmentCount }, (_, index) => {
-    const dueDate = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() + index, base.getUTCDate()));
+    const dueDate = buildSafeMonthDate(base, index);
     return {
       installment_number: index + 1,
       due_date: formatDate(dueDate),
@@ -466,6 +545,29 @@ function generateInstallmentItems(firstDueDate, installmentCount, installmentAmo
       status_code: "scheduled",
     };
   });
+}
+
+function distributeInstallmentAmounts(totalAmount, installmentCount, suggestedInstallmentAmount = null) {
+  const safeTotal = roundCurrency(totalAmount);
+  const safeCount = Number.parseInt(installmentCount, 10);
+  if (!Number.isFinite(safeTotal) || !Number.isFinite(safeCount) || safeCount <= 0) {
+    return [];
+  }
+
+  const baseAmount = suggestedInstallmentAmount != null
+    ? roundCurrency(suggestedInstallmentAmount)
+    : roundCurrency(safeTotal / safeCount);
+  const amounts = [];
+  let remaining = safeTotal;
+
+  for (let index = 0; index < safeCount; index += 1) {
+    const isLast = index === safeCount - 1;
+    const amount = isLast ? roundCurrency(remaining) : roundCurrency(Math.min(baseAmount, remaining));
+    amounts.push(amount);
+    remaining = roundCurrency(remaining - amount);
+  }
+
+  return amounts;
 }
 
 async function listInstallmentPlans(client, authUserId) {
@@ -484,6 +586,26 @@ async function listInstallmentPlans(client, authUserId) {
   return data ?? [];
 }
 
+async function ensureOwnedInstallmentPlan(client, appUserId, planId) {
+  const { data, error } = await client
+    .from("installment_plans")
+    .select("id,user_id,installment_count,total_amount,installment_amount,first_due_date,status_code")
+    .eq("id", planId)
+    .eq("user_id", appUserId)
+    .is("archived_at", null)
+    .maybeSingle();
+
+  if (error) {
+    throw new FinanceExperienceError(502, "supabase_query_error", "Falha ao localizar o parcelamento informado.");
+  }
+
+  if (!data?.id) {
+    throw new FinanceExperienceError(404, "installment_plan_not_found", "Parcelamento nao encontrado.");
+  }
+
+  return data;
+}
+
 async function createInstallmentPlan(client, authUserId, payload) {
   const appUser = await resolveCurrentAppUser(client, authUserId);
   const description = String(payload?.description ?? "").trim();
@@ -499,8 +621,33 @@ async function createInstallmentPlan(client, authUserId, payload) {
   if (!description || !Number.isFinite(totalAmount) || !Number.isFinite(installmentCount) || !firstDueDate) {
     throw new FinanceExperienceError(400, "validation_error", "Preencha descricao, valor total, quantidade de parcelas e primeiro vencimento.");
   }
+  if (installmentCount <= 0) {
+    throw new FinanceExperienceError(400, "validation_error", "Informe uma quantidade valida de parcelas.");
+  }
+  if (roundCurrency(totalAmount) <= 0) {
+    throw new FinanceExperienceError(400, "validation_error", "Informe um valor total maior que zero.");
+  }
 
   const counterpartyId = await ensureCounterparty(client, appUser.id, payload);
+  if (financialAccountId) {
+    const { data: ownedAccount, error: accountError } = await client
+      .from("financial_accounts")
+      .select("id,user_id")
+      .eq("id", financialAccountId)
+      .eq("user_id", appUser.id)
+      .maybeSingle();
+
+    if (accountError) {
+      throw new FinanceExperienceError(502, "supabase_query_error", "Falha ao localizar a conta do parcelamento.");
+    }
+
+    if (!ownedAccount?.id) {
+      throw new FinanceExperienceError(403, "forbidden", "Voce nao possui permissao para usar esta conta no parcelamento.");
+    }
+  }
+  await ensureOwnedCategory(client, appUser.id, categoryId);
+
+  const itemAmounts = distributeInstallmentAmounts(totalAmount, installmentCount, installmentAmount);
   const { data: plan, error: planError } = await client
     .from("installment_plans")
     .insert({
@@ -510,9 +657,9 @@ async function createInstallmentPlan(client, authUserId, payload) {
       category_id: categoryId,
       description,
       merchant_name: optionalText(payload?.supplierName),
-      total_amount: totalAmount,
+      total_amount: roundCurrency(totalAmount),
       installment_count: installmentCount,
-      installment_amount: Number(installmentAmount.toFixed(2)),
+      installment_amount: itemAmounts[0],
       first_due_date: firstDueDate,
       status_code: statusCode,
       source_code: "manual",
@@ -525,8 +672,9 @@ async function createInstallmentPlan(client, authUserId, payload) {
     throw new FinanceExperienceError(502, "supabase_insert_error", "Falha ao criar o parcelamento.");
   }
 
-  const items = generateInstallmentItems(firstDueDate, installmentCount, Number(installmentAmount.toFixed(2))).map((item) => ({
+  const items = generateInstallmentItems(firstDueDate, installmentCount, itemAmounts[0]).map((item, index) => ({
     installment_plan_id: plan.id,
+    amount: itemAmounts[index],
     ...item,
   }));
 
@@ -541,10 +689,13 @@ async function createInstallmentPlan(client, authUserId, payload) {
 async function linkInstallmentItem(client, authUserId, installmentPlanId, itemId, payload) {
   const appUser = await resolveCurrentAppUser(client, authUserId);
   const transactionId = optionalText(payload?.transactionId);
+  const statusCode = optionalText(payload?.statusCode);
+
+  await ensureOwnedInstallmentPlan(client, appUser.id, installmentPlanId);
 
   const { data: item, error } = await client
     .from("installment_plan_items")
-    .select("id,installment_plan_id")
+    .select("id,installment_plan_id,transaction_id,status_code")
     .eq("id", itemId)
     .eq("installment_plan_id", installmentPlanId)
     .single();
@@ -554,26 +705,40 @@ async function linkInstallmentItem(client, authUserId, installmentPlanId, itemId
   }
 
   if (transactionId) {
-    const { data: transaction } = await client
-      .from("transactions")
-      .select("id,user_id")
-      .eq("id", transactionId)
-      .eq("user_id", appUser.id)
+    await ensureOwnedTransaction(client, appUser.id, transactionId);
+    const { data: existingLink, error: existingLinkError } = await client
+      .from("installment_plan_items")
+      .select("id")
+      .eq("transaction_id", transactionId)
+      .neq("id", itemId)
       .maybeSingle();
 
-    if (!transaction?.id) {
-      throw new FinanceExperienceError(404, "transaction_not_found", "Movimentacao informada nao foi localizada.");
+    if (existingLinkError) {
+      throw new FinanceExperienceError(502, "supabase_query_error", "Falha ao verificar vinculos existentes da parcela.");
+    }
+
+    if (existingLink?.id) {
+      throw new FinanceExperienceError(409, "transaction_already_linked", "Esta movimentacao ja foi vinculada a outra parcela.");
     }
   }
+
+  const nextStatus = transactionId
+    ? "linked"
+    : statusCode === "paid"
+      ? "paid"
+      : statusCode === "cancelled"
+        ? "cancelled"
+        : "scheduled";
 
   const { data: updated, error: updateError } = await client
     .from("installment_plan_items")
     .update({
       transaction_id: transactionId,
-      status_code: transactionId ? "linked" : "scheduled",
+      status_code: nextStatus,
+      paid_at: nextStatus === "paid" ? new Date().toISOString() : null,
     })
     .eq("id", itemId)
-    .select("id,transaction_id,status_code")
+    .select("id,transaction_id,status_code,paid_at")
     .single();
 
   if (updateError || !updated) {
@@ -583,12 +748,123 @@ async function linkInstallmentItem(client, authUserId, installmentPlanId, itemId
   return updated;
 }
 
+async function updateInstallmentPlan(client, authUserId, installmentPlanId, payload) {
+  const appUser = await resolveCurrentAppUser(client, authUserId);
+  await ensureOwnedInstallmentPlan(client, appUser.id, installmentPlanId);
+
+  const patch = {};
+  if (payload?.description != null) patch.description = String(payload.description).trim();
+  if (payload?.notes !== undefined) patch.notes = optionalText(payload.notes);
+  if (payload?.statusCode != null) patch.status_code = optionalText(payload.statusCode) || "active";
+
+  if (!Object.keys(patch).length) {
+    throw new FinanceExperienceError(400, "validation_error", "Nenhuma alteracao valida foi informada para o parcelamento.");
+  }
+
+  const { data, error } = await client
+    .from("installment_plans")
+    .update(patch)
+    .eq("id", installmentPlanId)
+    .eq("user_id", appUser.id)
+    .select("id,description,status_code,notes,updated_at")
+    .single();
+
+  if (error || !data) {
+    throw new FinanceExperienceError(502, "supabase_update_error", "Falha ao atualizar o parcelamento.");
+  }
+
+  return data;
+}
+
+async function updateMovement(client, authUserId, movementId, payload) {
+  const appUser = await resolveCurrentAppUser(client, authUserId);
+  const categoryId = optionalText(payload?.categoryId);
+  const notes = payload?.notes !== undefined ? optionalText(payload.notes) : undefined;
+
+  const transaction = await ensureOwnedTransaction(client, appUser.id, movementId);
+  await ensureOwnedCategory(client, appUser.id, categoryId);
+
+  const patch = {};
+  if (payload?.categoryId !== undefined) patch.category_id = categoryId;
+  if (notes !== undefined) patch.notes = notes;
+
+  if (!Object.keys(patch).length) {
+    throw new FinanceExperienceError(400, "validation_error", "Nenhuma alteracao valida foi informada para a movimentacao.");
+  }
+
+  const { data, error } = await client
+    .from("transactions")
+    .update(patch)
+    .eq("id", transaction.id)
+    .eq("user_id", appUser.id)
+    .select("id,category_id,notes,updated_at")
+    .single();
+
+  if (error || !data) {
+    throw new FinanceExperienceError(502, "supabase_update_error", "Falha ao atualizar a movimentacao.");
+  }
+
+  return data;
+}
+
+async function updateDuplicateDecision(client, authUserId, movementId, payload) {
+  const appUser = await resolveCurrentAppUser(client, authUserId);
+  const decision = optionalText(payload?.decision);
+  const notes = optionalText(payload?.notes);
+
+  const decisionMap = {
+    keep: {
+      reconciliation_status: "matched",
+      note: "Marcada manualmente para manter este lancamento no grupo de duplicidade.",
+    },
+    not_duplicate: {
+      reconciliation_status: "reviewed",
+      note: "Marcada manualmente como nao duplicada.",
+    },
+    review_later: {
+      reconciliation_status: "pending",
+      note: "Mantida para revisao posterior.",
+    },
+  };
+
+  if (!decisionMap[decision]) {
+    throw new FinanceExperienceError(400, "validation_error", "Decisao de duplicidade invalida.");
+  }
+
+  const transaction = await ensureOwnedTransaction(client, appUser.id, movementId);
+  const baseNote = decisionMap[decision].note;
+  const finalNotes = [baseNote, notes].filter(Boolean).join(" ");
+
+  const { data, error } = await client
+    .from("transactions")
+    .update({
+      reconciliation_status: decisionMap[decision].reconciliation_status,
+      notes: finalNotes || null,
+    })
+    .eq("id", transaction.id)
+    .eq("user_id", appUser.id)
+    .select("id,reconciliation_status,notes,updated_at")
+    .single();
+
+  if (error || !data) {
+    throw new FinanceExperienceError(502, "supabase_update_error", "Falha ao registrar a decisao de duplicidade.");
+  }
+
+  return data;
+}
+
 module.exports = {
   FinanceExperienceError,
+  accountTypeLabel,
+  distributeInstallmentAmounts,
+  generateInstallmentItems,
   getFinanceOverview,
   listMovements,
   listDuplicateMovements,
   listInstallmentPlans,
   createInstallmentPlan,
   linkInstallmentItem,
+  updateInstallmentPlan,
+  updateMovement,
+  updateDuplicateDecision,
 };

@@ -20,6 +20,9 @@ const {
   listInstallmentPlans,
   createInstallmentPlan,
   linkInstallmentItem,
+  updateInstallmentPlan,
+  updateMovement,
+  updateDuplicateDecision,
 } = require("../services/financeExperienceService");
 
 const router = express.Router();
@@ -70,9 +73,19 @@ router.get("/movements", requireSupabaseAuth, async (req, res) => run(res, async
   res.json({ status: "ok", ...data });
 }));
 
+router.patch("/movements/:id", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const item = await updateMovement(buildClient(req), req.user.authUserId, req.params.id, req.body);
+  res.json({ status: "ok", item });
+}));
+
 router.get("/duplicates", requireSupabaseAuth, async (req, res) => run(res, async () => {
   const data = await listDuplicateMovements(buildClient(req), req.user.authUserId, req.query);
   res.json({ status: "ok", ...data });
+}));
+
+router.patch("/duplicates/:id", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const item = await updateDuplicateDecision(buildClient(req), req.user.authUserId, req.params.id, req.body);
+  res.json({ status: "ok", item });
 }));
 
 router.get("/installments", requireSupabaseAuth, async (req, res) => run(res, async () => {
@@ -83,6 +96,11 @@ router.get("/installments", requireSupabaseAuth, async (req, res) => run(res, as
 router.post("/installments", requireSupabaseAuth, async (req, res) => run(res, async () => {
   const item = await createInstallmentPlan(buildClient(req), req.user.authUserId, req.body);
   res.status(201).json({ status: "ok", item });
+}));
+
+router.patch("/installments/:planId", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const item = await updateInstallmentPlan(buildClient(req), req.user.authUserId, req.params.planId, req.body);
+  res.json({ status: "ok", item });
 }));
 
 router.post("/installments/:planId/items/:itemId/link", requireSupabaseAuth, async (req, res) => run(res, async () => {

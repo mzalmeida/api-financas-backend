@@ -9,6 +9,8 @@ class PortalServiceError extends Error {
   }
 }
 
+const ACCOUNT_TYPES = new Set(["checking", "savings", "investment", "payment", "cash", "other", "wallet", "manual", "credit_card"]);
+
 const ENTITY_CONFIG = {
   accounts: {
     table: "financial_accounts",
@@ -40,6 +42,15 @@ const ENTITY_CONFIG = {
       }
       if (!payload.account_type) {
         throw new PortalServiceError(400, "validation_error", "Informe o tipo da conta.");
+      }
+      if (!ACCOUNT_TYPES.has(payload.account_type)) {
+        throw new PortalServiceError(400, "validation_error", "Tipo de conta invalido.");
+      }
+      if (!["wallet", "manual"].includes(payload.account_type) && !payload.financial_institution_id) {
+        throw new PortalServiceError(400, "validation_error", "Instituicao obrigatoria para este tipo de conta.");
+      }
+      if (payload.opening_balance_date && Number.isNaN(new Date(`${payload.opening_balance_date}T12:00:00Z`).getTime())) {
+        throw new PortalServiceError(400, "validation_error", "Data do saldo inicial invalida.");
       }
       if (payload.account_type === "credit_card" && (!payload.statement_closing_day || !payload.statement_due_day)) {
         throw new PortalServiceError(400, "validation_error", "Informe fechamento e vencimento para conta de cartao.");
@@ -403,6 +414,30 @@ function fieldExists(select, field) {
   return select.split(",").map((item) => item.trim()).includes(field);
 }
 
+function mapDatabaseErrorToPortalError(error, entityName, action) {
+  const message = String(error?.message ?? "").toLowerCase();
+  const details = String(error?.details ?? "").toLowerCase();
+  const combined = `${message} ${details}`;
+
+  if (entityName === "accounts") {
+    if (combined.includes("uidx_financial_accounts__user_id_name")) {
+      return new PortalServiceError(409, "financial_account_already_exists", "Ja existe uma conta com esse nome.");
+    }
+    if (combined.includes("ck_financial_accounts__account_type")) {
+      return new PortalServiceError(400, "invalid_account_type", "Tipo de conta invalido.");
+    }
+    if (combined.includes("fk_financial_accounts__financial_institutions")) {
+      return new PortalServiceError(400, "invalid_financial_institution", "Instituicao obrigatoria ou invalida.");
+    }
+  }
+
+  if (error?.code === "42501") {
+    return new PortalServiceError(403, "forbidden", `Voce nao possui permissao para ${action} este registro.`);
+  }
+
+  return null;
+}
+
 async function createCatalogItem(client, authUserId, entityName, payload) {
   const config = getEntityConfig(entityName);
   const appUser = await resolveCurrentAppUser(client, authUserId);
@@ -421,6 +456,10 @@ async function createCatalogItem(client, authUserId, entityName, payload) {
     .single();
 
   if (error || !data) {
+    const mappedError = mapDatabaseErrorToPortalError(error, entityName, "criar");
+    if (mappedError) {
+      throw mappedError;
+    }
     throw new PortalServiceError(502, "supabase_insert_error", "Falha ao criar o registro solicitado.");
   }
 
@@ -457,6 +496,10 @@ async function updateCatalogItem(client, authUserId, entityName, itemId, payload
     .single();
 
   if (error || !data) {
+    const mappedError = mapDatabaseErrorToPortalError(error, entityName, "alterar");
+    if (mappedError) {
+      throw mappedError;
+    }
     throw new PortalServiceError(502, "supabase_update_error", "Falha ao atualizar o registro solicitado.");
   }
 
@@ -487,6 +530,10 @@ async function archiveCatalogItem(client, authUserId, entityName, itemId) {
   const { data, error } = await updateQuery.select(config.select).single();
 
   if (error || !data) {
+    const mappedError = mapDatabaseErrorToPortalError(error, entityName, "arquivar");
+    if (mappedError) {
+      throw mappedError;
+    }
     throw new PortalServiceError(502, "supabase_update_error", "Falha ao arquivar o registro solicitado.");
   }
 

@@ -41,7 +41,51 @@ function matchRule(rule, transaction) {
   }
 }
 
+async function findSharedSalaryCategory() {
+  const { data } = await adminSupabaseClient
+    .from("categories")
+    .select("id")
+    .is("user_id", null)
+    .eq("normalized_name", "salario")
+    .maybeSingle();
+
+  return data?.id ?? null;
+}
+
+async function ensureDefaultClassificationRules(appUserId) {
+  const salaryCategoryId = await findSharedSalaryCategory();
+  if (!salaryCategoryId) return;
+
+  const ruleName = "Salario portabilidade";
+  const { data: existing } = await adminSupabaseClient
+    .from("transaction_classification_rules")
+    .select("id")
+    .eq("user_id", appUserId)
+    .eq("rule_name", ruleName)
+    .is("archived_at", null)
+    .maybeSingle();
+
+  if (existing?.id) return;
+
+  await adminSupabaseClient
+    .from("transaction_classification_rules")
+    .insert({
+      user_id: appUserId,
+      category_id: salaryCategoryId,
+      rule_name: ruleName,
+      match_field: "description",
+      match_operator: "regex",
+      pattern_text: "(sal[aá]rio|portabilidade|folha|pagamento\\s+de\\s+sal[aá]rio)",
+      priority: 15,
+      target_movement_type: "income",
+      notes: "Regra inicial padrao para identificar salario sem depender de banco ou identificador pessoal.",
+      is_active: true,
+    });
+}
+
 async function loadClassificationRules(client, appUserId) {
+  await ensureDefaultClassificationRules(appUserId);
+
   const { data, error } = await client
     .from("transaction_classification_rules")
     .select("id,rule_name,match_field,match_operator,pattern_text,priority,target_movement_type,category_id,counterparty_id,is_active")
@@ -114,4 +158,5 @@ async function applyClassificationRuleSet(client, appUserId, transaction) {
 
 module.exports = {
   applyClassificationRuleSet,
+  matchRule,
 };
