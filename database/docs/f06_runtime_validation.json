@@ -1,0 +1,36 @@
+{
+  "validated_at": "2026-08-04T21:40:00Z",
+  "backend_url": "https://api-financas-backend1.onrender.com",
+  "frontend_url": "https://api-financas-frontend.onrender.com",
+  "production_validation": {
+    "authenticated_dashboard": true,
+    "revisions_section": true,
+    "suppliers_section": true,
+    "credit_card_excluded_from_cash_balance": true,
+    "credit_card_summary_kept_separate": true,
+    "humanized_import_status": true
+  },
+  "supplier_snapshot": {
+    "supplier_name": "Sem contraparte",
+    "purchase_count": 3,
+    "total_spent_bucket_present": true,
+    "institution_name": "Nubank",
+    "account_name_present": true
+  },
+  "responsive_review": {
+    "widths_checked": [320, 360, 375, 390, 430, 768, 820, 1024, 1180, 1280, 1366, 1440],
+    "login_shell_overflow_only_at_320_before_final_frontend_deploy": true
+  },
+  "security_hygiene": {
+    "historical_runtime_tokens_redacted": true,
+    "real_ofx_in_git": false,
+    "new_secrets_in_git": false
+  },
+  "local_validation": {
+    "node_check_backend": true,
+    "node_check_frontend": true,
+    "ofx_parser_tests": true,
+    "routing_tests": true,
+    "finance_experience_tests": true
+  }
+}

@@ -71,6 +71,14 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - `PATCH /portal/movements/:id`, `PATCH /portal/duplicates/:id` e `PATCH /portal/installments/:planId` fecharam a operacao manual de categorizacao, duplicidade e parcelamentos;
 - a suite local combinou `node --check`, testes diretos de parser/roteamento e novos testes unitarios de parcelamento/rule matching.
 
+## Estado consolidado da F06
+
+- `GET /portal/suppliers` passou a expor analise agregada de fornecedores por periodo, banco, conta e categoria;
+- `src/services/financeExperienceService.js` passou a normalizar fornecedor por descricao quando a contraparte ainda nao estiver cadastrada;
+- `src/services/importsService.js` passou a devolver estados finais mais especificos para confirmacao incremental: `completed_with_duplicates` e `no_new_transactions`;
+- a documentacao runtime historica da F03-E01 foi higienizada com `access_token` e `refresh_token` substituidos por `[REDACTED]`;
+- a validacao autenticada publicada de 2026-08-04 confirmou dashboard real, `Revisoes` publicado, `Fornecedores` publicado e separacao entre saldo disponivel e cartao de credito.
+
 ## Variaveis de ambiente
 
 - `NODE_ENV`
