@@ -18,6 +18,16 @@ function normalizeText(value) {
     .toLowerCase();
 }
 
+function normalizeSupplierName(value) {
+  const text = normalizeText(value)
+    .replace(/\b(?:pix|debito|credito|compra|pgto|pagamento|transf|transferencia|transferência)\b/g, " ")
+    .replace(/\bparcela\s+\d+\s*\/\s*\d+\b/g, " ")
+    .replace(/\b\d{2,}\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text || "sem fornecedor";
+}
+
 function optionalText(value) {
   const text = String(value ?? "").trim();
   return text || null;
@@ -312,6 +322,75 @@ function buildMonthlyTrend(transactions) {
   return [...trend.values()].sort((a, b) => a.month.localeCompare(b.month)).slice(-6);
 }
 
+function buildSupplierInsights(transactions) {
+  const expenseRows = transactions.filter((row) => Number(row.valor ?? 0) < 0);
+  const totalExpenses = expenseRows.reduce((sum, row) => sum + Math.abs(Number(row.valor ?? 0)), 0);
+  const map = new Map();
+
+  expenseRows.forEach((row) => {
+    const fallbackName = row.contraparte || row.descricao || row.descricao_normalizada || "Sem fornecedor";
+    const normalizedName = normalizeSupplierName(fallbackName);
+    const label = row.contraparte || row.descricao_normalizada || row.descricao || "Sem fornecedor";
+    const amount = Math.abs(Number(row.valor ?? 0));
+    const accountName = row.conta_nome || row.origem_financeira || "Sem conta";
+    const institutionName = row.banco || "Sem banco";
+    const date = String(row.data || "").slice(0, 10) || null;
+    const month = String(row.data_competencia || row.data || "").slice(0, 7) || "Sem competencia";
+
+    const current = map.get(normalizedName) ?? {
+      supplier_key: normalizedName,
+      supplier_name: label,
+      total_spent: 0,
+      purchase_count: 0,
+      average_spent: 0,
+      highest_spent: 0,
+      last_purchase_at: null,
+      institution_name: institutionName,
+      financial_account_name: accountName,
+      primary_category: row.categoria || "Sem categoria",
+      percentage_of_expenses: 0,
+      monthly_series: new Map(),
+      category_totals: new Map(),
+    };
+
+    current.total_spent += amount;
+    current.purchase_count += 1;
+    current.highest_spent = Math.max(current.highest_spent, amount);
+    current.last_purchase_at = !current.last_purchase_at || date > current.last_purchase_at ? date : current.last_purchase_at;
+    current.institution_name = institutionName;
+    current.financial_account_name = accountName;
+    current.monthly_series.set(month, roundCurrency((current.monthly_series.get(month) ?? 0) + amount));
+    current.category_totals.set(row.categoria || "Sem categoria", roundCurrency((current.category_totals.get(row.categoria || "Sem categoria") ?? 0) + amount));
+    map.set(normalizedName, current);
+  });
+
+  return [...map.values()]
+    .map((item) => {
+      const primaryCategory = [...item.category_totals.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "Sem categoria";
+      return {
+        supplier_key: item.supplier_key,
+        supplier_name: item.supplier_name,
+        total_spent: roundCurrency(item.total_spent),
+        purchase_count: item.purchase_count,
+        average_spent: roundCurrency(item.total_spent / item.purchase_count),
+        highest_spent: roundCurrency(item.highest_spent),
+        last_purchase_at: item.last_purchase_at,
+        institution_name: item.institution_name,
+        financial_account_name: item.financial_account_name,
+        primary_category: primaryCategory,
+        percentage_of_expenses: totalExpenses > 0 ? roundCurrency((item.total_spent / totalExpenses) * 100) : 0,
+        monthly_series: [...item.monthly_series.entries()]
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([month, total]) => ({ month, total })),
+      };
+    })
+    .sort((a, b) => {
+      if (b.total_spent !== a.total_spent) return b.total_spent - a.total_spent;
+      if (b.purchase_count !== a.purchase_count) return b.purchase_count - a.purchase_count;
+      return String(b.last_purchase_at || "").localeCompare(String(a.last_purchase_at || ""));
+    });
+}
+
 async function loadInstallmentsSummary(client, appUserId, competence) {
   const monthStart = `${competence}-01`;
   const nextMonth = shiftMonthIso(monthStart, 1);
@@ -496,6 +575,40 @@ async function listDuplicateMovements(client, authUserId, query = {}) {
     filters,
     total: filtered.length,
     items: filtered,
+  };
+}
+
+async function listSupplierInsights(client, authUserId, query = {}) {
+  const appUser = await resolveCurrentAppUser(client, authUserId);
+  const filters = buildFilters(query);
+  const [baseResult, accountsResult] = await Promise.all([
+    client.from("vw_transacoes_base").select("*").order("data", { ascending: false }).limit(4000),
+    client
+      .from("financial_accounts")
+      .select("id,name,account_type")
+      .eq("user_id", appUser.id)
+      .is("archived_at", null),
+  ]);
+
+  if (baseResult.error || accountsResult.error) {
+    throw new FinanceExperienceError(502, "supabase_query_error", "Falha ao consultar fornecedores.");
+  }
+
+  const accounts = accountsResult.data ?? [];
+  const rows = (baseResult.data ?? []).map((row) => ({
+    ...row,
+    id: row.transacao_id,
+    tipo_conta: accounts.find((item) => item.id === row.conta_financeira_id)?.account_type ?? "other",
+    conta_nome: accounts.find((item) => item.id === row.conta_financeira_id)?.name ?? row.origem_financeira ?? null,
+  }));
+  const filtered = applyTransactionFilters(rows, filters);
+  const items = buildSupplierInsights(filtered)
+    .filter((item) => !filters.search || normalizeText(`${item.supplier_name} ${item.primary_category} ${item.institution_name} ${item.financial_account_name}`).includes(normalizeText(filters.search)));
+
+  return {
+    filters,
+    total: items.length,
+    items,
   };
 }
 
@@ -856,11 +969,13 @@ async function updateDuplicateDecision(client, authUserId, movementId, payload) 
 module.exports = {
   FinanceExperienceError,
   accountTypeLabel,
+  buildSupplierInsights,
   distributeInstallmentAmounts,
   generateInstallmentItems,
   getFinanceOverview,
   listMovements,
   listDuplicateMovements,
+  listSupplierInsights,
   listInstallmentPlans,
   createInstallmentPlan,
   linkInstallmentItem,

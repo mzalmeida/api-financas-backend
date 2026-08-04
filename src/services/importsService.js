@@ -7,7 +7,7 @@ const MAX_PREVIEW_ROWS = 50;
 const HISTORY_LIMIT = 20;
 const PREVIEW_STAGE = "pending_confirmation";
 const SUPPORTED_ACCOUNT_TYPES = new Set(["checking", "savings", "investment", "payment", "cash", "other", "wallet", "manual", "credit_card"]);
-const SUPPORTED_IMPORT_STATUSES = new Set(["pending", "pending_confirmation", "processing", "completed", "completed_with_errors", "failed", "cancelled"]);
+const SUPPORTED_IMPORT_STATUSES = new Set(["pending", "pending_confirmation", "processing", "completed", "completed_with_errors", "completed_with_duplicates", "no_new_transactions", "failed", "cancelled"]);
 
 class ImportFlowError extends Error {
   constructor(status, code, message, details = null) {
@@ -969,7 +969,13 @@ async function confirmImport(client, authUserId, payload) {
   const previewDuplicateRows = importRows.filter((row) => row.processing_status === "duplicate").length;
   const finalDuplicateRows = previewDuplicateRows + duplicateRows.length;
   const createdCount = insertedTransactions.length;
-  const completionStatus = finalRejectedRows > 0 || finalDuplicateRows > 0 ? "completed_with_errors" : "completed";
+  const completionStatus = finalAcceptedRows === 0 && finalDuplicateRows > 0 && finalRejectedRows === 0
+    ? "no_new_transactions"
+    : finalAcceptedRows > 0 && finalDuplicateRows > 0 && finalRejectedRows === 0
+      ? "completed_with_duplicates"
+      : finalRejectedRows > 0 || finalDuplicateRows > 0
+        ? "completed_with_errors"
+        : "completed";
 
   const { error: updateImportError } = await client
     .from("imports")
@@ -988,7 +994,13 @@ async function confirmImport(client, authUserId, payload) {
           duplicate_at_confirmation: duplicateRows.length,
         },
       },
-      error_summary: finalRejectedRows > 0 || finalDuplicateRows > 0 ? "Importacao concluida com rejeicoes ou duplicidades." : null,
+      error_summary: finalAcceptedRows === 0 && finalDuplicateRows > 0 && finalRejectedRows === 0
+        ? "Nenhuma movimentacao nova foi encontrada nesta confirmacao."
+        : finalAcceptedRows > 0 && finalDuplicateRows > 0 && finalRejectedRows === 0
+          ? "Importacao concluida com linhas novas e duplicidades ignoradas."
+          : finalRejectedRows > 0 || finalDuplicateRows > 0
+            ? "Importacao concluida com rejeicoes ou duplicidades."
+            : null,
     })
     .eq("id", importId);
 

@@ -17,6 +17,7 @@ const {
   getFinanceOverview,
   listMovements,
   listDuplicateMovements,
+  listSupplierInsights,
   listInstallmentPlans,
   createInstallmentPlan,
   linkInstallmentItem,
@@ -80,6 +81,11 @@ router.patch("/movements/:id", requireSupabaseAuth, async (req, res) => run(res,
 
 router.get("/duplicates", requireSupabaseAuth, async (req, res) => run(res, async () => {
   const data = await listDuplicateMovements(buildClient(req), req.user.authUserId, req.query);
+  res.json({ status: "ok", ...data });
+}));
+
+router.get("/suppliers", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const data = await listSupplierInsights(buildClient(req), req.user.authUserId, req.query);
   res.json({ status: "ok", ...data });
 }));
 

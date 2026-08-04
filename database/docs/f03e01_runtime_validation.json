@@ -31,8 +31,8 @@
       "status": "ok",
       "auth_provider": "supabase",
       "session": {
-        "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjI4YzYwNWNjLWUzMTUtNDM2Ny04ZTk3LWI2ZjgyZWMwYWIxYyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2dibnphY2RzeHNpdnd3c3F1eGt5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2ZTI4YzM0YS0xMDVlLTRkMjAtYTUwMi1mYzcxNDViNGVkNGUiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg1NjMwMzg5LCJpYXQiOjE3ODU2MjY3ODksImVtYWlsIjoiZjAzZTAxLXVzZXItYUBleGFtcGxlLmludmFsaWQiLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImNvZGUiOiJBIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1hcmtlciI6IkYwM0UwMSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzg1NjI2Nzg5fV0sInNlc3Npb25faWQiOiI3ZGRlYzdjNy1mMzI2LTQ1ZjItOWE1Ni05YmJjYWRmYWNmMDMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.9pmtzoL4veASs7tH98z5luXYhUsLoX7shiNPnBeHrGI3-hzpmzQtEl9g7RYSkWt7GIf3rbT-rDUmYSN3J4HrPg",
-        "refresh_token": "vwtwrbcqwrtm",
+        "access_token": "[REDACTED]",
+        "refresh_token": "[REDACTED]",
         "expires_in": 3600,
         "expires_at": 1785630389,
         "token_type": "bearer",
@@ -81,8 +81,8 @@
     "data": {
       "status": "ok",
       "session": {
-        "access_token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjI4YzYwNWNjLWUzMTUtNDM2Ny04ZTk3LWI2ZjgyZWMwYWIxYyIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2dibnphY2RzeHNpdnd3c3F1eGt5LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2ZTI4YzM0YS0xMDVlLTRkMjAtYTUwMi1mYzcxNDViNGVkNGUiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzg1NjMwMzkxLCJpYXQiOjE3ODU2MjY3OTEsImVtYWlsIjoiZjAzZTAxLXVzZXItYUBleGFtcGxlLmludmFsaWQiLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImNvZGUiOiJBIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm1hcmtlciI6IkYwM0UwMSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzg1NjI2Nzg5fV0sInNlc3Npb25faWQiOiI3ZGRlYzdjNy1mMzI2LTQ1ZjItOWE1Ni05YmJjYWRmYWNmMDMiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.2Zu_GXmE-CYv176IhPKnWuaQZ1DBBVaK-wW2yJqANfYZEFDmoCmf3ztpS_8vrUJoW7rY29Qb_AZLzmIKOsZ9dg",
-        "refresh_token": "2qqwunhinf4w",
+        "access_token": "[REDACTED]",
+        "refresh_token": "[REDACTED]",
         "expires_in": 3600,
         "expires_at": 1785630391,
         "token_type": "bearer",

@@ -1,0 +1,806 @@
+{
+  "generated_at": "2026-08-02T00:32:46.024Z",
+  "public_backend_url": "https://api-financas-backend1.onrender.com",
+  "public_frontend_url": "https://api-financas-frontend.onrender.com",
+  "synthetic_users": [
+    {
+      "code": "A",
+      "email_masked": "f03e01r1-user-a+masked@example.invalid",
+      "auth_user_id_masked": "04440915...",
+      "public_user_id_masked": "e4e2ed90..."
+    },
+    {
+      "code": "B",
+      "email_masked": "f03e01r1-user-b+masked@example.invalid",
+      "auth_user_id_masked": "9c1cb620...",
+      "public_user_id_masked": "8f3082cd..."
+    }
+  ],
+  "health": {
+    "root": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb13691aff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "36",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:37 GMT",
+        "etag": "W/\"20-DeFaMSzvhdGjpnAXP9sRxeeJhS4\"",
+        "rndr-id": "d8d04aa8-6940-426d",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "API Financas online"
+      }
+    },
+    "official": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb15f89eff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "95",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:38 GMT",
+        "etag": "W/\"79-fJ0fP4l6kSMAPsniVy+r1VGencQ\"",
+        "rndr-id": "fb6c4900-f505-4614",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "service": "api-financas",
+        "timestamp": "2026-08-02T00:31:37.990Z",
+        "version": "1.0.0",
+        "supabase": "configured"
+      }
+    },
+    "legacy": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb16fb67ff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "95",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:38 GMT",
+        "etag": "W/\"79-6AaBZEV1ucpTvz6CjEJacwsmR7k\"",
+        "rndr-id": "eae0af1a-b614-4798",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "service": "api-financas",
+        "timestamp": "2026-08-02T00:31:38.157Z",
+        "version": "1.0.0",
+        "supabase": "configured"
+      }
+    }
+  },
+  "cors": {
+    "allowed": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "access-control-allow-origin": "http://localhost:8080",
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb17fe44ff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "95",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:38 GMT",
+        "etag": "W/\"79-F6pr0QkUt61X0f6XdrKQaKbu3Qw\"",
+        "rndr-id": "02921b64-efde-46d3",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "service": "api-financas",
+        "timestamp": "2026-08-02T00:31:38.311Z",
+        "version": "1.0.0",
+        "supabase": "configured"
+      }
+    },
+    "blocked": {
+      "ok": false,
+      "status": 403,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb18f93fff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "58",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:38 GMT",
+        "etag": "W/\"3b-dUCNSteLZnp+PYOJ4ES7jSV0wL0\"",
+        "rndr-id": "ac1cd5ad-233f-45ec",
+        "server": "cloudflare",
+        "vary": "Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "erro": "Origem nao permitida",
+        "codigo": "cors_not_allowed"
+      }
+    }
+  },
+  "login_valid": {
+    "ok": true,
+    "status": 200,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=86400",
+      "cf-cache-status": "DYNAMIC",
+      "cf-ray": "a248fb19ec25ff8c-GRU",
+      "connection": "keep-alive",
+      "content-encoding": "br",
+      "content-length": "862",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sun, 02 Aug 2026 00:31:39 GMT",
+      "etag": "W/\"4bc-mK5bX48gHsegFcMFzLhC9a1Tz20\"",
+      "rndr-id": "6cfc5281-c0d6-4f57",
+      "server": "cloudflare",
+      "vary": "Origin, Accept-Encoding",
+      "x-powered-by": "Express",
+      "x-render-origin-server": "Render"
+    },
+    "data": {
+      "status": "ok",
+      "auth_provider": "supabase",
+      "session": {
+        "access_token": "[REDACTED]",
+        "refresh_token": "[REDACTED]",
+        "expires_in": 3600,
+        "expires_at": 1785634299,
+        "token_type": "bearer",
+        "user": {
+          "id": "04440915-7796-4d99-b442-9f9ea1a53f60",
+          "email": "f03e01r1-user-a@example.invalid"
+        }
+      },
+      "user": {
+        "id": "04440915-7796-4d99-b442-9f9ea1a53f60",
+        "email": "f03e01r1-user-a@example.invalid"
+      }
+    }
+  },
+  "login_invalid": {
+    "ok": false,
+    "status": 401,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=86400",
+      "cf-cache-status": "DYNAMIC",
+      "cf-ray": "a248fb202e15ff8c-GRU",
+      "connection": "keep-alive",
+      "content-encoding": "br",
+      "content-length": "57",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sun, 02 Aug 2026 00:31:40 GMT",
+      "etag": "W/\"3f-6DfCosKp7kzFPk7eAFucz3b/8kc\"",
+      "rndr-id": "8f0e72c2-c6f4-44c3",
+      "server": "cloudflare",
+      "vary": "Origin, Accept-Encoding",
+      "x-powered-by": "Express",
+      "x-render-origin-server": "Render"
+    },
+    "data": {
+      "erro": "Credenciais invalidas",
+      "codigo": "invalid_credentials"
+    }
+  },
+  "restore_session": {
+    "ok": true,
+    "status": 200,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=86400",
+      "cf-cache-status": "DYNAMIC",
+      "cf-ray": "a248fb23f83eff8c-GRU",
+      "connection": "keep-alive",
+      "content-encoding": "br",
+      "content-length": "192",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sun, 02 Aug 2026 00:31:40 GMT",
+      "etag": "W/\"10c-0iIX7yEKBv3hMzdz42uqmJ0V2r4\"",
+      "rndr-id": "8bd9ab37-54ba-4fe5",
+      "server": "cloudflare",
+      "vary": "Origin, Accept-Encoding",
+      "x-powered-by": "Express",
+      "x-render-origin-server": "Render"
+    },
+    "data": {
+      "status": "ok",
+      "user": {
+        "authUserId": "04440915-7796-4d99-b442-9f9ea1a53f60",
+        "email": "f03e01r1-user-a@example.invalid",
+        "role": "authenticated",
+        "appMetadata": {
+          "provider": "email",
+          "providers": [
+            "email"
+          ]
+        },
+        "userMetadata": {
+          "code": "A",
+          "email_verified": true,
+          "marker": "F03E01R1"
+        }
+      }
+    }
+  },
+  "refresh_session": {
+    "ok": true,
+    "status": 200,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=86400",
+      "cf-cache-status": "DYNAMIC",
+      "cf-ray": "a248fb26cf43ff8c-GRU",
+      "connection": "keep-alive",
+      "content-encoding": "br",
+      "content-length": "838",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sun, 02 Aug 2026 00:31:40 GMT",
+      "etag": "W/\"4a1-L+klcpSWYBdGaDW3Q5/qkO2Xnj4\"",
+      "rndr-id": "2ef22fa6-cbd6-4f0a",
+      "server": "cloudflare",
+      "vary": "Origin, Accept-Encoding",
+      "x-powered-by": "Express",
+      "x-render-origin-server": "Render"
+    },
+    "data": {
+      "status": "ok",
+      "session": {
+        "access_token": "[REDACTED]",
+        "refresh_token": "[REDACTED]",
+        "expires_in": 3600,
+        "expires_at": 1785634300,
+        "token_type": "bearer",
+        "user": {
+          "id": "04440915-7796-4d99-b442-9f9ea1a53f60",
+          "email": "f03e01r1-user-a@example.invalid"
+        }
+      },
+      "user": {
+        "id": "04440915-7796-4d99-b442-9f9ea1a53f60",
+        "email": "f03e01r1-user-a@example.invalid"
+      }
+    }
+  },
+  "logout": {
+    "ok": true,
+    "status": 200,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=86400",
+      "cf-cache-status": "DYNAMIC",
+      "cf-ray": "a248fb514f33ff8c-GRU",
+      "connection": "keep-alive",
+      "content-encoding": "br",
+      "content-length": "19",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sun, 02 Aug 2026 00:31:47 GMT",
+      "etag": "W/\"f-VaSQ4oDUiZblZNAEkkN+sX+q3Sg\"",
+      "rndr-id": "10d4b083-19e8-47a8",
+      "server": "cloudflare",
+      "vary": "Origin, Accept-Encoding",
+      "x-powered-by": "Express",
+      "x-render-origin-server": "Render"
+    },
+    "data": {
+      "status": "ok"
+    }
+  },
+  "token_absent": {
+    "ok": false,
+    "status": 401,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=86400",
+      "cf-cache-status": "DYNAMIC",
+      "cf-ray": "a248fb288c4cff8c-GRU",
+      "connection": "keep-alive",
+      "content-encoding": "br",
+      "content-length": "52",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sun, 02 Aug 2026 00:31:41 GMT",
+      "etag": "W/\"37-8cNePYNsqGUuK+GiByya5Ig6eFw\"",
+      "rndr-id": "9fb1cdfb-9c4c-42eb",
+      "server": "cloudflare",
+      "vary": "Origin, Accept-Encoding",
+      "x-powered-by": "Express",
+      "x-render-origin-server": "Render"
+    },
+    "data": {
+      "erro": "Token nao informado",
+      "codigo": "missing_token"
+    }
+  },
+  "token_malformed": {
+    "ok": false,
+    "status": 401,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=86400",
+      "cf-cache-status": "DYNAMIC",
+      "cf-ray": "a248fb296ec4ff8c-GRU",
+      "connection": "keep-alive",
+      "content-encoding": "br",
+      "content-length": "49",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sun, 02 Aug 2026 00:31:41 GMT",
+      "etag": "W/\"32-WeKMdDNSviXfOMqpqRSN5r/t8jo\"",
+      "rndr-id": "846af57f-0850-4bf7",
+      "server": "cloudflare",
+      "vary": "Origin, Accept-Encoding",
+      "x-powered-by": "Express",
+      "x-render-origin-server": "Render"
+    },
+    "data": {
+      "erro": "Token invalido",
+      "codigo": "invalid_token"
+    }
+  },
+  "token_expired": {
+    "ok": false,
+    "status": 401,
+    "headers": {
+      "alt-svc": "h3=\":443\"; ma=86400",
+      "cf-cache-status": "DYNAMIC",
+      "cf-ray": "a248fb2b0b84ff8c-GRU",
+      "connection": "keep-alive",
+      "content-encoding": "br",
+      "content-length": "49",
+      "content-type": "application/json; charset=utf-8",
+      "date": "Sun, 02 Aug 2026 00:31:41 GMT",
+      "etag": "W/\"32-+XK7NWpnP05eMXa3bDSTEXW7lbM\"",
+      "rndr-id": "c5fc75f5-11e8-4078",
+      "server": "cloudflare",
+      "vary": "Origin, Accept-Encoding",
+      "x-powered-by": "Express",
+      "x-render-origin-server": "Render"
+    },
+    "data": {
+      "erro": "Token expirado",
+      "codigo": "expired_token"
+    }
+  },
+  "user_a": {
+    "banco": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb2e2c61ff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "161",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:42 GMT",
+        "etag": "W/\"d8-4NgQH31IO9oSLWS+KeRE9nMZ69E\"",
+        "rndr-id": "55f84553-3945-4c32",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "user_id": "e4e2ed90-6687-44d6-b3d0-8bcb6d4e33c8",
+            "banco": "Nubank",
+            "total_gasto": 15,
+            "quantidade_transacoes": 2,
+            "periodo_inicial": "2026-08-01",
+            "periodo_final": "2026-08-02"
+          }
+        ]
+      }
+    },
+    "base": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb368b51ff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "729",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:43 GMT",
+        "etag": "W/\"816-T90uWO0kgpVRgKcmmfUdPCKzNNE\"",
+        "rndr-id": "f8ea7508-2c64-454d",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 2,
+        "dados": [
+          {
+            "transacao_id": "61cd8a05-2100-4f30-8a7d-2a1156d70222",
+            "user_id": "e4e2ed90-6687-44d6-b3d0-8bcb6d4e33c8",
+            "data": "2026-08-01",
+            "data_competencia": null,
+            "data_postagem": null,
+            "banco": "Nubank",
+            "origem_financeira": "F03E01R1 Account A",
+            "contraparte": "F03E01R1 Counterparty A",
+            "categoria": "F03E01R1 Category A",
+            "tipo_movimento": "expense",
+            "status_lancamento": "posted",
+            "status_conciliacao": "pending",
+            "origem_transacao": "manual",
+            "descricao": "F03E01R1 Expense A",
+            "descricao_normalizada": "F03E01R1 Expense A",
+            "valor": -10,
+            "valor_absoluto": 10,
+            "moeda": "BRL",
+            "conta_financeira_id": "69a452a3-d1ea-440f-805a-45bc443b980b",
+            "cartao_id": null,
+            "contraparte_id": "e39a659e-4d88-42cd-aa92-62fb63da5f9f",
+            "categoria_id": "9f3720fe-a35a-475c-b858-770e997e1b6e",
+            "importacao_linha_id": null,
+            "transacao_vinculada_id": null,
+            "hash_deduplicacao": "5d89bcb239cb7a19be8bc9ca11c6781d61ebbc16266ddb229c058fe5af16d6da",
+            "grupo_duplicidade": "f03e01r1-a",
+            "observacoes": null,
+            "criado_em": "2026-08-02T00:31:37.294793+00:00",
+            "atualizado_em": "2026-08-02T00:31:37.294793+00:00",
+            "arquivado_em": null
+          },
+          {
+            "transacao_id": "c8e69b18-09f9-4807-96cd-4ca52809cb9d",
+            "user_id": "e4e2ed90-6687-44d6-b3d0-8bcb6d4e33c8",
+            "data": "2026-08-02",
+            "data_competencia": null,
+            "data_postagem": null,
+            "banco": "Nubank",
+            "origem_financeira": "F03E01R1 Account A",
+            "contraparte": "F03E01R1 Counterparty A",
+            "categoria": "Transferencia entre contas proprias",
+            "tipo_movimento": "transfer",
+            "status_lancamento": "posted",
+            "status_conciliacao": "pending",
+            "origem_transacao": "manual",
+            "descricao": "F03E01R1 Shared",
+            "descricao_normalizada": "F03E01R1 Shared",
+            "valor": -5,
+            "valor_absoluto": 5,
+            "moeda": "BRL",
+            "conta_financeira_id": "69a452a3-d1ea-440f-805a-45bc443b980b",
+            "cartao_id": null,
+            "contraparte_id": "e39a659e-4d88-42cd-aa92-62fb63da5f9f",
+            "categoria_id": "47eb9e4c-3c6f-4f1b-a7fd-93b56318475e",
+            "importacao_linha_id": null,
+            "transacao_vinculada_id": null,
+            "hash_deduplicacao": null,
+            "grupo_duplicidade": null,
+            "observacoes": null,
+            "criado_em": "2026-08-02T00:31:37.294793+00:00",
+            "atualizado_em": "2026-08-02T00:31:37.294793+00:00",
+            "arquivado_em": null
+          }
+        ]
+      }
+    },
+    "recorrentes": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb3fbc90ff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "197",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:45 GMT",
+        "etag": "W/\"100-RkwvnIy1/lfidPy7TEMaJw+UGDM\"",
+        "rndr-id": "4becb618-e540-4b3e",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "user_id": "e4e2ed90-6687-44d6-b3d0-8bcb6d4e33c8",
+            "contraparte": "F03E01R1 Counterparty A",
+            "valor_medio": 7.5,
+            "ocorrencias": 2,
+            "periodicidade_estimada": "recorrencia_indeterminada",
+            "ultimo_lancamento": "2026-08-02"
+          }
+        ]
+      }
+    },
+    "fornecedores": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb47fd47ff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "185",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:46 GMT",
+        "etag": "W/\"e6-aYZTO8gWJfaNGYQLi3iwRr6ztZQ\"",
+        "rndr-id": "47028fbf-3424-4828",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "user_id": "e4e2ed90-6687-44d6-b3d0-8bcb6d4e33c8",
+            "fornecedor": "F03E01R1 Counterparty A",
+            "total_gasto": 15,
+            "quantidade_transacoes": 2,
+            "ticket_medio": 7.5,
+            "ultimo_lancamento": "2026-08-02"
+          }
+        ]
+      }
+    },
+    "duplicadas": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb4c9a18ff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "48",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:47 GMT",
+        "etag": "W/\"2e-WuG/l9ZmXAP0ep4ILVJHCPYMUk0\"",
+        "rndr-id": "b458e1bc-d1f1-452d",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 0,
+        "dados": []
+      }
+    }
+  },
+  "user_b": {
+    "banco": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb321f7aff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "163",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:43 GMT",
+        "etag": "W/\"dd-Cn7eAwff8EOy0PH8523s4EpH6D4\"",
+        "rndr-id": "56b69a6e-8501-4bc5",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "user_id": "8f3082cd-2aff-45cc-bac1-b2950457c66f",
+            "banco": "Banco Inter",
+            "total_gasto": 20,
+            "quantidade_transacoes": 1,
+            "periodo_inicial": "2026-08-01",
+            "periodo_final": "2026-08-01"
+          }
+        ]
+      }
+    },
+    "base": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb3b380bff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "611",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:44 GMT",
+        "etag": "W/\"445-06GB5yfjn3yeDyFLSeWMiYPhoRU\"",
+        "rndr-id": "04ececa2-7cf5-4b41",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "transacao_id": "b8d90f87-e473-4db2-9420-b53590739b4f",
+            "user_id": "8f3082cd-2aff-45cc-bac1-b2950457c66f",
+            "data": "2026-08-01",
+            "data_competencia": null,
+            "data_postagem": null,
+            "banco": "Banco Inter",
+            "origem_financeira": "F03E01R1 Account B",
+            "contraparte": "F03E01R1 Counterparty B",
+            "categoria": "F03E01R1 Category B",
+            "tipo_movimento": "expense",
+            "status_lancamento": "posted",
+            "status_conciliacao": "pending",
+            "origem_transacao": "manual",
+            "descricao": "F03E01R1 Expense B",
+            "descricao_normalizada": "F03E01R1 Expense B",
+            "valor": -20,
+            "valor_absoluto": 20,
+            "moeda": "BRL",
+            "conta_financeira_id": "7e015f77-df1c-4813-aed9-f35c6a12b6d2",
+            "cartao_id": null,
+            "contraparte_id": "66ff69e6-89ab-44bb-ae90-ffb5a14299a5",
+            "categoria_id": "5fefa2fd-3a41-4504-bd32-e135e0f8da10",
+            "importacao_linha_id": null,
+            "transacao_vinculada_id": null,
+            "hash_deduplicacao": "28ceed075c48224b74c729cb2eedb3010cd4c1c365406623bb397cf6a0e54ef7",
+            "grupo_duplicidade": "f03e01r1-b",
+            "observacoes": null,
+            "criado_em": "2026-08-02T00:31:37.294793+00:00",
+            "atualizado_em": "2026-08-02T00:31:37.294793+00:00",
+            "arquivado_em": null
+          }
+        ]
+      }
+    },
+    "recorrentes": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb446a00ff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "48",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:45 GMT",
+        "etag": "W/\"2e-WuG/l9ZmXAP0ep4ILVJHCPYMUk0\"",
+        "rndr-id": "e873c2b7-d1d2-4ad5",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 0,
+        "dados": []
+      }
+    },
+    "fornecedores": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb4a5ba5ff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "185",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:46 GMT",
+        "etag": "W/\"e5-//9CrGVe0KidYc3pbei76jmWQOo\"",
+        "rndr-id": "e24830df-84db-481a",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 1,
+        "dados": [
+          {
+            "user_id": "8f3082cd-2aff-45cc-bac1-b2950457c66f",
+            "fornecedor": "F03E01R1 Counterparty B",
+            "total_gasto": 20,
+            "quantidade_transacoes": 1,
+            "ticket_medio": 20,
+            "ultimo_lancamento": "2026-08-01"
+          }
+        ]
+      }
+    },
+    "duplicadas": {
+      "ok": true,
+      "status": 200,
+      "headers": {
+        "alt-svc": "h3=\":443\"; ma=86400",
+        "cf-cache-status": "DYNAMIC",
+        "cf-ray": "a248fb4ef844ff8c-GRU",
+        "connection": "keep-alive",
+        "content-encoding": "br",
+        "content-length": "48",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Sun, 02 Aug 2026 00:31:47 GMT",
+        "etag": "W/\"2e-WuG/l9ZmXAP0ep4ILVJHCPYMUk0\"",
+        "rndr-id": "90ab03da-e0b9-49c4",
+        "server": "cloudflare",
+        "vary": "Origin, Accept-Encoding",
+        "x-powered-by": "Express",
+        "x-render-origin-server": "Render"
+      },
+      "data": {
+        "status": "ok",
+        "total_registros": 0,
+        "dados": []
+      }
+    }
+  },
+  "isolation": {
+    "banco": {
+      "user_a_total": 1,
+      "user_b_total": 1
+    },
+    "base": {
+      "user_a_total": 2,
+      "user_b_total": 1
+    },
+    "fornecedores": {
+      "user_a_total": 1,
+      "user_b_total": 1
+    }
+  },
+  "frontend_public": {
+    "html_has_linkedin_field": false,
+    "js_points_to_backend1": true,
+    "js_uses_local_storage": true
+  },
+  "cleanup": {
+    "synthetic_users_removed": true
+  }
+}
