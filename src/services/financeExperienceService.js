@@ -276,6 +276,7 @@ function buildCardSummary(accounts, transactions, competence) {
       name: card.name,
       open_amount: currentLiability,
       closed_amount: previousLiability,
+      statement_amount: Math.max(currentLiability, previousLiability),
       next_due_date: card.statement_due_day ? `${competence}-${String(card.statement_due_day).padStart(2, "0")}` : null,
       credit_limit_amount: card.credit_limit_amount,
       utilized_limit_ratio: utilized,
@@ -403,7 +404,10 @@ async function loadInstallmentsSummary(client, appUserId, competence) {
     .select("id,installment_number,due_date,amount,status_code,installment_plans!inner(id,user_id,description,status_code)")
     .gte("due_date", monthStart)
     .lte("due_date", monthEnd || monthStart)
-    .eq("installment_plans.user_id", appUserId);
+    .eq("installment_plans.user_id", appUserId)
+    .eq("installment_plans.status_code", "active")
+    .neq("status_code", "paid")
+    .neq("status_code", "cancelled");
 
   if (error) {
     return {
@@ -494,7 +498,7 @@ async function getFinanceOverview(client, authUserId, query = {}) {
     latest_transactions: filteredTransactions.slice(0, 12),
     import_summary: importsResult.data ?? [],
     category_summary: buildCategorySummary(monthTransactions),
-    monthly_trend: buildMonthlyTrend(typedTransactions),
+    monthly_trend: buildMonthlyTrend(filteredTransactions),
   };
 }
 
@@ -696,7 +700,15 @@ async function listInstallmentPlans(client, authUserId) {
     throw new FinanceExperienceError(502, "supabase_query_error", "Falha ao consultar parcelamentos.");
   }
 
-  return data ?? [];
+  return (data ?? []).map((plan) => ({
+    ...plan,
+    installment_plan_items: [...(plan.installment_plan_items ?? [])].sort((a, b) => {
+      if (String(a.due_date || "") !== String(b.due_date || "")) {
+        return String(a.due_date || "").localeCompare(String(b.due_date || ""));
+      }
+      return Number(a.installment_number ?? 0) - Number(b.installment_number ?? 0);
+    }),
+  }));
 }
 
 async function ensureOwnedInstallmentPlan(client, appUserId, planId) {
@@ -869,6 +881,10 @@ async function updateInstallmentPlan(client, authUserId, installmentPlanId, payl
   if (payload?.description != null) patch.description = String(payload.description).trim();
   if (payload?.notes !== undefined) patch.notes = optionalText(payload.notes);
   if (payload?.statusCode != null) patch.status_code = optionalText(payload.statusCode) || "active";
+  if (payload?.archive === true) {
+    patch.archived_at = new Date().toISOString();
+    patch.status_code = "cancelled";
+  }
 
   if (!Object.keys(patch).length) {
     throw new FinanceExperienceError(400, "validation_error", "Nenhuma alteracao valida foi informada para o parcelamento.");
@@ -879,7 +895,7 @@ async function updateInstallmentPlan(client, authUserId, installmentPlanId, payl
     .update(patch)
     .eq("id", installmentPlanId)
     .eq("user_id", appUser.id)
-    .select("id,description,status_code,notes,updated_at")
+    .select("id,description,status_code,notes,updated_at,archived_at")
     .single();
 
   if (error || !data) {

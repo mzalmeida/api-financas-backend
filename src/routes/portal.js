@@ -109,6 +109,11 @@ router.patch("/installments/:planId", requireSupabaseAuth, async (req, res) => r
   res.json({ status: "ok", item });
 }));
 
+router.delete("/installments/:planId", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const item = await updateInstallmentPlan(buildClient(req), req.user.authUserId, req.params.planId, { archive: true });
+  res.json({ status: "ok", item });
+}));
+
 router.post("/installments/:planId/items/:itemId/link", requireSupabaseAuth, async (req, res) => run(res, async () => {
   const item = await linkInstallmentItem(buildClient(req), req.user.authUserId, req.params.planId, req.params.itemId, req.body);
   res.json({ status: "ok", item });
