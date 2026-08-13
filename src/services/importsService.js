@@ -923,9 +923,30 @@ async function confirmImport(client, authUserId, payload) {
   const candidateRows = importRows.filter((row) => row.processing_status === "accepted" && !row.linked_transaction_id);
   if (candidateRows.length === 0) {
     if (importRecord.accepted_rows === 0 && importRecord.duplicate_rows > 0) {
+      const { error: duplicateOnlyUpdateError } = await adminSupabaseClient
+        .from("imports")
+        .update({
+          status_code: "completed_with_errors",
+          finished_at: new Date().toISOString(),
+          processing_summary: {
+            ...(importRecord.processing_summary || {}),
+            stage: "confirmed",
+            confirmation: {
+              created_transactions: 0,
+              duplicate_at_confirmation: importRecord.duplicate_rows,
+            },
+          },
+          error_summary: "Nenhuma movimentacao nova foi encontrada nesta confirmacao.",
+        })
+        .eq("id", importId);
+
+      if (duplicateOnlyUpdateError) {
+        throw new ImportFlowError(502, "supabase_update_error", "Falha ao finalizar o status da importacao duplicada.");
+      }
+
       return {
         import_id: importRecord.id,
-        status: "completed_with_duplicates",
+        status: "completed_with_errors",
         already_confirmed: true,
         totals: {
           total_rows: importRecord.total_rows,
@@ -1023,9 +1044,7 @@ async function confirmImport(client, authUserId, payload) {
   const previewDuplicateRows = importRows.filter((row) => row.processing_status === "duplicate").length;
   const finalDuplicateRows = previewDuplicateRows + duplicateRows.length;
   const createdCount = insertedTransactions.length;
-  const completionStatus = finalDuplicateRows > 0 && finalRejectedRows === 0
-    ? "completed_with_duplicates"
-    : finalRejectedRows > 0 || finalDuplicateRows > 0
+  const completionStatus = finalRejectedRows > 0 || finalDuplicateRows > 0
       ? "completed_with_errors"
       : "completed";
 
