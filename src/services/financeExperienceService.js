@@ -259,6 +259,7 @@ function getCycleWindow(referenceDate, closingDay) {
     openEnd: null,
     closedStart: formatDate(closedStart),
     closedEnd: formatDate(currentClosing),
+    currentClosing,
   };
 }
 
@@ -272,7 +273,10 @@ function buildSafeMonthDate(baseDate, monthOffset) {
 }
 
 function buildCardSummary(accounts, transactions, competence, installmentPlans = []) {
-  const referenceDate = parseDate(`${competence}-01`) || new Date();
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const referenceDate = competence === currentMonth
+    ? new Date()
+    : new Date(Date.UTC(Number(String(competence).slice(0, 4)), Number(String(competence).slice(5, 7)) || 1, 0, 12));
   const cards = accounts.filter((account) => account.account_type === "credit_card");
   const cardAccountIds = new Set(cards.map((account) => account.id));
   const manualCardAccounts = accounts.filter((account) => {
@@ -355,8 +359,14 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       open_amount: currentLiability,
       closed_amount: previousLiability,
       statement_amount: Math.max(currentLiability, previousLiability),
-      next_due_date: card.statement_due_day
-        ? `${competence}-${String(card.statement_due_day).padStart(2, "0")}`
+      next_due_date: card.statement_due_day && card.statement_closing_day
+        ? formatDate(new Date(Date.UTC(
+          window.currentClosing.getUTCFullYear(),
+          window.currentClosing.getUTCMonth() + 1,
+          Math.min(Number(card.statement_due_day), 28),
+        )))
+        : card.statement_due_day
+          ? `${competence}-${String(card.statement_due_day).padStart(2, "0")}`
         : manualCurrentItems[0]?.due_date ?? null,
       credit_limit_amount: card.credit_limit_amount,
       utilized_limit_ratio: utilized,
