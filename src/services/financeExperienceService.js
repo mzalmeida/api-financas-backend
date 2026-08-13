@@ -291,6 +291,7 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       ? "Banco Inter - Cartao de credito"
       : `${account.name} - Cartao de credito`,
     account_type: "credit_card",
+    is_manual_card: true,
   }))];
 
   const commitmentMap = new Map();
@@ -333,7 +334,9 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
 
   const rows = summaryAccounts.map((card) => {
     const window = getCycleWindow(referenceDate, card.statement_closing_day || 1);
-    const cardTransactions = transactions.filter((transaction) => transaction.conta_financeira_id === card.id);
+    const cardTransactions = card.is_manual_card
+      ? []
+      : transactions.filter((transaction) => transaction.conta_financeira_id === card.id);
     const openAmount = cardTransactions
       .filter((transaction) => String(transaction.data || "").slice(0, 10) >= window.openStart)
       .reduce((sum, transaction) => sum + Number(transaction.valor ?? 0), 0);
