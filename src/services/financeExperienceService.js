@@ -598,7 +598,7 @@ async function getFinanceOverview(client, authUserId, query = {}) {
     latest_transactions: filteredTransactions.slice(0, 12),
     import_summary: importsResult.data ?? [],
     category_summary: buildCategorySummary(monthTransactions),
-    monthly_trend: buildMonthlyTrend(filteredTransactions),
+    monthly_trend: buildMonthlyTrend(typedTransactions),
   };
 }
 
