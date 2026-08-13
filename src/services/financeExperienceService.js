@@ -340,13 +340,15 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       ? []
       : transactions.filter((transaction) => transaction.conta_financeira_id === card.id);
     const openAmount = cardTransactions
-      .filter((transaction) => String(transaction.data || "").slice(0, 10) >= window.openStart)
+      .filter((transaction) => String(transaction.data || "").slice(0, 10) >= formatDate(window.currentClosing))
+      .filter((transaction) => Number(transaction.valor ?? 0) < 0)
       .reduce((sum, transaction) => sum + Number(transaction.valor ?? 0), 0);
     const closedAmount = cardTransactions
       .filter((transaction) => {
         const date = String(transaction.data || "").slice(0, 10);
         return date >= window.closedStart && date <= window.closedEnd;
       })
+      .filter((transaction) => Number(transaction.valor ?? 0) < 0)
       .reduce((sum, transaction) => sum + Number(transaction.valor ?? 0), 0);
     const manualItems = installmentPlans
       .filter((plan) => plan.financial_account_id === card.id)
