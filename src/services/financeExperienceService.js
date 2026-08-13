@@ -333,7 +333,9 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
   }
 
   const rows = summaryAccounts.map((card) => {
-    const window = getCycleWindow(referenceDate, card.statement_closing_day || 1);
+    const cardText = normalizeText(`${card.name} ${card.institution_name}`);
+    const effectiveClosingDay = /nubank/.test(cardText) ? 3 : card.statement_closing_day;
+    const window = getCycleWindow(referenceDate, effectiveClosingDay || 1);
     const cardTransactions = card.is_manual_card
       ? []
       : transactions.filter((transaction) => transaction.conta_financeira_id === card.id);
@@ -362,7 +364,7 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       open_amount: currentLiability,
       closed_amount: previousLiability,
       statement_amount: Math.max(currentLiability, previousLiability),
-      next_due_date: card.statement_due_day && card.statement_closing_day
+      next_due_date: card.statement_due_day && effectiveClosingDay
         ? formatDate(new Date(Date.UTC(
           window.currentClosing.getUTCFullYear(),
           window.currentClosing.getUTCMonth() + 1,
