@@ -289,7 +289,32 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
     account_type: "credit_card",
   }))];
 
-  if (!summaryAccounts.length) {
+  const commitmentMap = new Map();
+  installmentPlans.forEach((plan) => {
+    const label = plan.merchant_name || plan.description || "Compromisso";
+    const key = normalizeSupplierName(label);
+    const items = (plan.installment_plan_items ?? []).filter((item) => String(item.due_date || "").slice(0, 7) === competence
+      && !["paid", "completed", "cancelled"].includes(String(item.status_code || "").toLowerCase()));
+    if (!items.length) return;
+
+    const current = commitmentMap.get(key) ?? {
+      id: `commitment-${key}`,
+      name: label,
+      amount: 0,
+      due_dates: [],
+    };
+    current.amount += items.reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
+    current.due_dates.push(...items.map((item) => item.due_date).filter(Boolean));
+    commitmentMap.set(key, current);
+  });
+  const commitments = [...commitmentMap.values()].map((item) => ({
+    id: item.id,
+    name: item.name,
+    amount: Number(item.amount.toFixed(2)),
+    due_date: [...item.due_dates].sort()[0] ?? null,
+  }));
+
+  if (!summaryAccounts.length && !commitments.length) {
     return {
       open_amount: 0,
       closed_amount: 0,
@@ -297,6 +322,7 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       utilized_limit_amount: 0,
       utilized_limit_ratio: null,
       cards: [],
+      commitments: [],
     };
   }
 
@@ -333,11 +359,6 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
         : manualCurrentItems[0]?.due_date ?? null,
       credit_limit_amount: card.credit_limit_amount,
       utilized_limit_ratio: utilized,
-      installment_summary: manualCurrentItems.map((item) => ({
-        installment_number: item.installment_number,
-        amount: item.amount,
-        due_date: item.due_date,
-      })),
     };
   });
 
@@ -350,6 +371,7 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       ? Number((rows.reduce((sum, row) => sum + (row.utilized_limit_ratio ?? 0), 0) / rows.filter((row) => row.utilized_limit_ratio != null).length).toFixed(1))
       : null,
     cards: rows,
+    commitments,
   };
 }
 
@@ -505,7 +527,7 @@ async function getFinanceOverview(client, authUserId, query = {}) {
     client.from("imports").select("id,status_code,finished_at,started_at,accepted_rows,duplicate_rows,total_rows").order("started_at", { ascending: false }).limit(12),
     client.from("view_transacoes_duplicadas").select("transacao_id").limit(500),
     loadInstallmentsSummary(client, appUser.id, filters.competence),
-    client.from("installment_plans").select("id,financial_account_id,installment_plan_items(installment_number,due_date,amount,status_code)").eq("user_id", appUser.id).eq("status_code", "active").is("archived_at", null),
+    client.from("installment_plans").select("id,description,merchant_name,financial_account_id,installment_plan_items(installment_number,due_date,amount,status_code)").eq("user_id", appUser.id).eq("status_code", "active").is("archived_at", null),
   ]);
 
   if (transactionsResult.error || accountsResult.error || importsResult.error || duplicatesResult.error || installmentPlansResult.error) {
@@ -528,7 +550,7 @@ async function getFinanceOverview(client, authUserId, query = {}) {
   const monthTransactions = filteredTransactions;
   const monthlyIncome = monthTransactions.filter((row) => Number(row.valor ?? 0) > 0).reduce((sum, row) => sum + Number(row.valor ?? 0), 0);
   const monthlyExpense = monthTransactions.filter((row) => Number(row.valor ?? 0) < 0).reduce((sum, row) => sum + Math.abs(Number(row.valor ?? 0)), 0);
-  const cardSummary = buildCardSummary(accountBalances, typedTransactions, filters.competence, installmentPlansResult.data ?? []);
+  const cardSummary = buildCardSummary(accountBalances, filteredTransactions, filters.competence, installmentPlansResult.data ?? []);
   const latestImport = importsResult.data?.[0] ?? null;
 
   return {
