@@ -607,6 +607,7 @@ async function listSupplierInsights(client, authUserId, query = {}) {
   }));
   const filtered = applyTransactionFilters(rows, filters);
   const items = buildSupplierInsights(filtered)
+    .filter((item) => item.purchase_count > 1)
     .filter((item) => !filters.search || normalizeText(`${item.supplier_name} ${item.primary_category} ${item.institution_name} ${item.financial_account_name}`).includes(normalizeText(filters.search)));
 
   return {
