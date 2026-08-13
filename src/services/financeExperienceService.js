@@ -293,6 +293,7 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
   installmentPlans.forEach((plan) => {
     const label = plan.merchant_name || plan.description || "Compromisso";
     const key = normalizeSupplierName(label);
+    if (/flexpag|cpfl/i.test(`${label} ${plan.description || ""}`)) return;
     const items = (plan.installment_plan_items ?? []).filter((item) => String(item.due_date || "").slice(0, 7) === competence
       && !["paid", "completed", "cancelled"].includes(String(item.status_code || "").toLowerCase()));
     if (!items.length) return;
@@ -550,7 +551,7 @@ async function getFinanceOverview(client, authUserId, query = {}) {
   const monthTransactions = filteredTransactions;
   const monthlyIncome = monthTransactions.filter((row) => Number(row.valor ?? 0) > 0).reduce((sum, row) => sum + Number(row.valor ?? 0), 0);
   const monthlyExpense = monthTransactions.filter((row) => Number(row.valor ?? 0) < 0).reduce((sum, row) => sum + Math.abs(Number(row.valor ?? 0)), 0);
-  const cardSummary = buildCardSummary(accountBalances, filteredTransactions, filters.competence, installmentPlansResult.data ?? []);
+  const cardSummary = buildCardSummary(accountBalances, typedTransactions, filters.competence, installmentPlansResult.data ?? []);
   const latestImport = importsResult.data?.[0] ?? null;
 
   return {
