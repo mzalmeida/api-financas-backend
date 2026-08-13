@@ -121,7 +121,7 @@ function resolvePreviewImportOutcome(rowSummary) {
 
   if (hasOnlyDuplicates) {
     return {
-      importStatus: "completed_with_duplicates",
+      importStatus: PREVIEW_STAGE,
       errorSummary: "Todas as linhas do arquivo ja existem no historico desta conta.",
       outcomeWarning: "Nenhuma movimentacao nova foi encontrada: todas as linhas do arquivo ja estavam importadas.",
     };
