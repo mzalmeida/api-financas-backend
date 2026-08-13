@@ -114,9 +114,11 @@ async function ensureOwnedCategory(client, appUserId, categoryId) {
 }
 
 function buildFilters(query = {}) {
-  const competence = optionalText(query.competence) || startOfMonthIso().slice(0, 7);
+  const allPeriod = String(query.allPeriod ?? query.all_period ?? "") === "true";
+  const competence = allPeriod ? null : optionalText(query.competence) || startOfMonthIso().slice(0, 7);
   return {
     competence,
+    allPeriod,
     bank: optionalText(query.bank),
     financialAccountId: optionalText(query.financialAccountId ?? query.accountId),
     category: optionalText(query.category),
@@ -126,7 +128,7 @@ function buildFilters(query = {}) {
     creditCardOnly: String(query.creditCardOnly ?? "") === "true",
     search: optionalText(query.search),
     page: Math.max(1, Number.parseInt(query.page, 10) || 1),
-    pageSize: Math.min(100, Math.max(1, Number.parseInt(query.pageSize, 10) || 20)),
+    pageSize: Math.min(1000, Math.max(1, Number.parseInt(query.pageSize, 10) || 20)),
   };
 }
 
@@ -240,11 +242,25 @@ function buildSafeMonthDate(baseDate, monthOffset) {
   return new Date(Date.UTC(targetMonthStart.getUTCFullYear(), targetMonthStart.getUTCMonth(), day));
 }
 
-function buildCardSummary(accounts, transactions, competence) {
+function buildCardSummary(accounts, transactions, competence, installmentPlans = []) {
   const referenceDate = parseDate(`${competence}-01`) || new Date();
   const cards = accounts.filter((account) => account.account_type === "credit_card");
+  const cardAccountIds = new Set(cards.map((account) => account.id));
+  const manualCardAccounts = accounts.filter((account) => {
+    const accountText = normalizeText(`${account.name} ${account.institution_name}`);
+    return !cardAccountIds.has(account.id)
+      && installmentPlans.some((plan) => plan.financial_account_id === account.id)
+      && /nubank|inter/.test(accountText);
+  });
+  const summaryAccounts = [...cards, ...manualCardAccounts.map((account) => ({
+    ...account,
+    name: /inter/.test(normalizeText(`${account.name} ${account.institution_name}`))
+      ? "Banco Inter - Cartao de credito"
+      : `${account.name} - Cartao de credito`,
+    account_type: "credit_card",
+  }))];
 
-  if (!cards.length) {
+  if (!summaryAccounts.length) {
     return {
       open_amount: 0,
       closed_amount: 0,
@@ -255,7 +271,7 @@ function buildCardSummary(accounts, transactions, competence) {
     };
   }
 
-  const rows = cards.map((card) => {
+  const rows = summaryAccounts.map((card) => {
     const window = getCycleWindow(referenceDate, card.statement_closing_day || 1);
     const cardTransactions = transactions.filter((transaction) => transaction.conta_financeira_id === card.id);
     const openAmount = cardTransactions
@@ -267,7 +283,13 @@ function buildCardSummary(accounts, transactions, competence) {
         return date >= window.closedStart && date <= window.closedEnd;
       })
       .reduce((sum, transaction) => sum + Number(transaction.valor ?? 0), 0);
-    const currentLiability = Math.max(0, -Number(openAmount.toFixed(2)));
+    const manualItems = installmentPlans
+      .filter((plan) => plan.financial_account_id === card.id)
+      .flatMap((plan) => plan.installment_plan_items ?? [])
+      .filter((item) => !["paid", "completed", "cancelled"].includes(String(item.status_code || "").toLowerCase()));
+    const manualCurrentItems = manualItems.filter((item) => String(item.due_date || "").slice(0, 7) === competence);
+    const manualAmount = manualCurrentItems.reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
+    const currentLiability = Math.max(0, -Number(openAmount.toFixed(2))) || Number(manualAmount.toFixed(2));
     const previousLiability = Math.max(0, -Number(closedAmount.toFixed(2)));
     const utilized = card.credit_limit_amount ? Number(((currentLiability / card.credit_limit_amount) * 100).toFixed(1)) : null;
 
@@ -277,9 +299,16 @@ function buildCardSummary(accounts, transactions, competence) {
       open_amount: currentLiability,
       closed_amount: previousLiability,
       statement_amount: Math.max(currentLiability, previousLiability),
-      next_due_date: card.statement_due_day ? `${competence}-${String(card.statement_due_day).padStart(2, "0")}` : null,
+      next_due_date: card.statement_due_day
+        ? `${competence}-${String(card.statement_due_day).padStart(2, "0")}`
+        : manualCurrentItems[0]?.due_date ?? null,
       credit_limit_amount: card.credit_limit_amount,
       utilized_limit_ratio: utilized,
+      installment_summary: manualCurrentItems.map((item) => ({
+        installment_number: item.installment_number,
+        amount: item.amount,
+        due_date: item.due_date,
+      })),
     };
   });
 
@@ -435,7 +464,7 @@ async function loadInstallmentsSummary(client, appUserId, competence) {
 async function getFinanceOverview(client, authUserId, query = {}) {
   const appUser = await resolveCurrentAppUser(client, authUserId);
   const filters = buildFilters(query);
-  const [transactionsResult, accountsResult, importsResult, duplicatesResult, installmentsSummary] = await Promise.all([
+  const [transactionsResult, accountsResult, importsResult, duplicatesResult, installmentsSummary, installmentPlansResult] = await Promise.all([
     client.from("vw_transacoes_base").select("*").order("data", { ascending: false }).limit(3000),
     client
       .from("financial_accounts")
@@ -446,9 +475,10 @@ async function getFinanceOverview(client, authUserId, query = {}) {
     client.from("imports").select("id,status_code,finished_at,started_at,accepted_rows,duplicate_rows,total_rows").order("started_at", { ascending: false }).limit(12),
     client.from("view_transacoes_duplicadas").select("transacao_id").limit(500),
     loadInstallmentsSummary(client, appUser.id, filters.competence),
+    client.from("installment_plans").select("id,financial_account_id,installment_plan_items(installment_number,due_date,amount,status_code)").eq("user_id", appUser.id).eq("status_code", "active").is("archived_at", null),
   ]);
 
-  if (transactionsResult.error || accountsResult.error || importsResult.error || duplicatesResult.error) {
+  if (transactionsResult.error || accountsResult.error || importsResult.error || duplicatesResult.error || installmentPlansResult.error) {
     throw new FinanceExperienceError(502, "supabase_query_error", "Falha ao montar a experiencia financeira.");
   }
 
@@ -468,7 +498,7 @@ async function getFinanceOverview(client, authUserId, query = {}) {
   const monthTransactions = filteredTransactions;
   const monthlyIncome = monthTransactions.filter((row) => Number(row.valor ?? 0) > 0).reduce((sum, row) => sum + Number(row.valor ?? 0), 0);
   const monthlyExpense = monthTransactions.filter((row) => Number(row.valor ?? 0) < 0).reduce((sum, row) => sum + Math.abs(Number(row.valor ?? 0)), 0);
-  const cardSummary = buildCardSummary(accountBalances, typedTransactions, filters.competence);
+  const cardSummary = buildCardSummary(accountBalances, typedTransactions, filters.competence, installmentPlansResult.data ?? []);
   const latestImport = importsResult.data?.[0] ?? null;
 
   return {
@@ -584,7 +614,7 @@ async function listDuplicateMovements(client, authUserId, query = {}) {
 
 async function listSupplierInsights(client, authUserId, query = {}) {
   const appUser = await resolveCurrentAppUser(client, authUserId);
-  const filters = buildFilters(query);
+  const filters = buildFilters({ ...query, allPeriod: "true" });
   const [baseResult, accountsResult] = await Promise.all([
     client.from("vw_transacoes_base").select("*").order("data", { ascending: false }).limit(4000),
     client

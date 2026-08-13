@@ -487,6 +487,10 @@ async function updateCatalogItem(client, authUserId, entityName, itemId, payload
     throw new PortalServiceError(404, "record_not_found", "Registro nao encontrado.");
   }
 
+  if (config.ownership === "shared_or_user" && existing?.user_id == null) {
+    throw new PortalServiceError(409, "shared_record_read_only", "Categorias padrao sao compartilhadas e nao podem ser alteradas. Crie uma categoria propria para edita-la.");
+  }
+
   const writeClient = config.ownership === "global" ? adminSupabaseClient : client;
   const { data, error } = await writeClient
     .from(config.table)

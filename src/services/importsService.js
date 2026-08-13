@@ -1029,7 +1029,7 @@ async function confirmImport(client, authUserId, payload) {
       ? "completed_with_errors"
       : "completed";
 
-  const { error: updateImportError } = await client
+  const { error: updateImportError } = await adminSupabaseClient
     .from("imports")
     .update({
       status_code: completionStatus,
