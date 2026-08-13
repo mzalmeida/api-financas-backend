@@ -28,6 +28,19 @@ function buildClient(req) {
   return createSupabaseUserClient(req.accessToken);
 }
 
+function buildImportLogContext(req) {
+  return {
+    method: req.method,
+    path: req.originalUrl,
+    auth_user_id: req.user?.authUserId ?? null,
+    financial_account_id: req.body?.financialAccountId ?? null,
+    financial_institution_id: req.body?.financialInstitutionId ?? null,
+    import_id: req.body?.importId ?? req.params?.id ?? null,
+    file_name: req.file?.originalname ?? null,
+    file_size: req.file?.size ?? null,
+  };
+}
+
 function sendKnownError(res, error) {
   if (error instanceof ImportFlowError) {
     return res.status(error.status).json({
@@ -61,6 +74,20 @@ async function run(handler, req, res) {
   try {
     await handler();
   } catch (error) {
+    const logContext = buildImportLogContext(req);
+    if (error instanceof ImportFlowError) {
+      console.error("Falha controlada na importacao:", {
+        ...logContext,
+        code: error.code,
+        message: error.message,
+        details: error.details ?? null,
+      });
+    } else if (!(error instanceof multer.MulterError)) {
+      console.error("Falha inesperada na importacao:", {
+        ...logContext,
+        message: error.message,
+      });
+    }
     return sendKnownError(res, error);
   }
 }

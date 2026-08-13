@@ -177,12 +177,11 @@ function detectInstitution(rawText, header, institutions = []) {
     rawText.slice(0, 4000),
   ].filter(Boolean).join(" "));
 
-  const matchedRule = INSTITUTION_RULES.find((rule) => (
-    rule.codes.includes(normalizedFid)
-    || rule.codes.includes(normalizedBankId)
-    || rule.names.some((matcher) => normalizedOrg.includes(normalizeText(matcher)))
-    || rule.names.some((matcher) => textEvidence.includes(normalizeText(matcher)))
-  ));
+  const matchedRule =
+    INSTITUTION_RULES.find((rule) => rule.codes.includes(normalizedFid))
+    || INSTITUTION_RULES.find((rule) => rule.codes.includes(normalizedBankId))
+    || INSTITUTION_RULES.find((rule) => rule.names.some((matcher) => normalizedOrg.includes(normalizeText(matcher))))
+    || INSTITUTION_RULES.find((rule) => rule.names.some((matcher) => textEvidence.includes(normalizeText(matcher))));
   if (!matchedRule) {
     return {
       institutionId: null,

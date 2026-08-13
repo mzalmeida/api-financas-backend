@@ -7,7 +7,7 @@ const MAX_PREVIEW_ROWS = 50;
 const HISTORY_LIMIT = 20;
 const PREVIEW_STAGE = "pending_confirmation";
 const SUPPORTED_ACCOUNT_TYPES = new Set(["checking", "savings", "investment", "payment", "cash", "other", "wallet", "manual", "credit_card"]);
-const SUPPORTED_IMPORT_STATUSES = new Set(["pending", "pending_confirmation", "processing", "completed", "completed_with_errors", "completed_with_duplicates", "no_new_transactions", "failed", "cancelled"]);
+const SUPPORTED_IMPORT_STATUSES = new Set(["pending", "pending_confirmation", "processing", "completed", "completed_with_errors", "completed_with_duplicates", "failed", "cancelled"]);
 
 class ImportFlowError extends Error {
   constructor(status, code, message, details = null) {
@@ -103,6 +103,35 @@ function summarizeRows(rows) {
     total_income: 0,
     total_expense: 0,
   });
+}
+
+function resolvePreviewImportOutcome(rowSummary) {
+  const hasAcceptedRows = rowSummary.valid_count > 0;
+  const hasOnlyDuplicates = rowSummary.valid_count === 0
+    && rowSummary.duplicate_count > 0
+    && rowSummary.invalid_count === 0;
+
+  if (hasAcceptedRows) {
+    return {
+      importStatus: PREVIEW_STAGE,
+      errorSummary: null,
+      outcomeWarning: null,
+    };
+  }
+
+  if (hasOnlyDuplicates) {
+    return {
+      importStatus: "completed_with_duplicates",
+      errorSummary: "Todas as linhas do arquivo ja existem no historico desta conta.",
+      outcomeWarning: "Nenhuma movimentacao nova foi encontrada: todas as linhas do arquivo ja estavam importadas.",
+    };
+  }
+
+  return {
+    importStatus: "failed",
+    errorSummary: "Nenhuma linha valida foi encontrada no preview.",
+    outcomeWarning: null,
+  };
 }
 
 async function resolveCurrentAppUser(client, authUserId) {
@@ -426,7 +455,8 @@ async function insertPreviewImport(client, context, file, parsed, rows, fileHash
     detected_account_identifier: parsed.header.accountId || null,
   };
 
-  const importStatus = rowSummary.valid_count > 0 ? PREVIEW_STAGE : "failed";
+  const previewOutcome = resolvePreviewImportOutcome(rowSummary);
+  const importStatus = previewOutcome.importStatus;
   const fileStatus = rowSummary.valid_count > 0 || rowSummary.duplicate_count > 0 ? "processed" : "failed";
 
   const { data: importRow, error: importError } = await client
@@ -445,7 +475,7 @@ async function insertPreviewImport(client, context, file, parsed, rows, fileHash
       rejected_rows: rowSummary.invalid_count,
       duplicate_rows: rowSummary.duplicate_count,
       processing_summary: processingSummary,
-      error_summary: rowSummary.valid_count === 0 ? "Nenhuma linha valida foi encontrada no preview." : null,
+      error_summary: previewOutcome.errorSummary,
     })
     .select("id,status_code,total_rows,processed_rows,accepted_rows,rejected_rows,duplicate_rows,processing_summary,started_at,finished_at,financial_account_id,financial_institution_id")
     .single();
@@ -517,7 +547,7 @@ async function insertPreviewImport(client, context, file, parsed, rows, fileHash
   };
 }
 
-function buildPreviewResponse(context, parsed, previewRows, insertedImport, existingFileImports) {
+function buildPreviewResponse(context, parsed, previewRows, insertedImport, existingFileImports, previewWarnings = []) {
   const { rowSummary } = insertedImport;
   return {
     import_id: insertedImport.importRow.id,
@@ -561,7 +591,7 @@ function buildPreviewResponse(context, parsed, previewRows, insertedImport, exis
       total_income: Number(rowSummary.total_income.toFixed(2)),
       total_expense: Number(rowSummary.total_expense.toFixed(2)),
     },
-    warnings: [...parsed.warnings, ...(existingFileImports.length > 0 ? ["Este arquivo ja apareceu anteriormente para a mesma conta."] : [])],
+    warnings: [...parsed.warnings, ...previewWarnings],
     file_duplicates: existingFileImports,
     preview_rows: previewRows.slice(0, MAX_PREVIEW_ROWS).map(sanitizeRowForPreview),
     preview_rows_truncated: previewRows.length > MAX_PREVIEW_ROWS,
@@ -600,10 +630,15 @@ async function previewOfxImport(client, authUserId, payload, file) {
     initialPreviewRows.map((row) => row.duplicateGroupKey),
   );
   const previewRows = attachExistingDuplicateSignals(initialPreviewRows, existingTransactions);
+  const rowSummary = summarizeRows(previewRows);
+  const previewOutcome = resolvePreviewImportOutcome(rowSummary);
   const previewWarnings = [];
 
   if (existingFileImports.length > 0) {
     previewWarnings.push("Arquivo identico ja apareceu anteriormente no historico desta conta.");
+  }
+  if (previewOutcome.outcomeWarning) {
+    previewWarnings.push(previewOutcome.outcomeWarning);
   }
 
   const insertedImport = await insertPreviewImport(client, {
@@ -614,7 +649,7 @@ async function previewOfxImport(client, authUserId, payload, file) {
   return buildPreviewResponse({
     ...context,
     requestedInstitutionId: selectedInstitutionId,
-  }, parsed, previewRows, insertedImport, existingFileImports);
+  }, parsed, previewRows, insertedImport, existingFileImports, previewWarnings);
 }
 
 async function getImportList(client, authUserId, query = {}) {
@@ -841,7 +876,11 @@ async function confirmImport(client, authUserId, payload) {
     throw new ImportFlowError(409, "confirmation_already_completed", "Importacao em estado incompativel com a confirmacao.");
   }
 
-  if (importRecord.status_code === "completed" || importRecord.status_code === "completed_with_errors") {
+  if (
+    importRecord.status_code === "completed"
+    || importRecord.status_code === "completed_with_errors"
+    || importRecord.status_code === "completed_with_duplicates"
+  ) {
     return {
       import_id: importRecord.id,
       status: importRecord.status_code,
@@ -883,6 +922,21 @@ async function confirmImport(client, authUserId, payload) {
 
   const candidateRows = importRows.filter((row) => row.processing_status === "accepted" && !row.linked_transaction_id);
   if (candidateRows.length === 0) {
+    if (importRecord.accepted_rows === 0 && importRecord.duplicate_rows > 0) {
+      return {
+        import_id: importRecord.id,
+        status: "completed_with_duplicates",
+        already_confirmed: true,
+        totals: {
+          total_rows: importRecord.total_rows,
+          processed_rows: importRecord.processed_rows,
+          accepted_rows: importRecord.accepted_rows,
+          rejected_rows: importRecord.rejected_rows,
+          duplicate_rows: importRecord.duplicate_rows,
+        },
+      };
+    }
+
     throw new ImportFlowError(409, "no_transactions_found", "Nao existem linhas validas pendentes para confirmar nesta importacao.");
   }
 
@@ -969,13 +1023,11 @@ async function confirmImport(client, authUserId, payload) {
   const previewDuplicateRows = importRows.filter((row) => row.processing_status === "duplicate").length;
   const finalDuplicateRows = previewDuplicateRows + duplicateRows.length;
   const createdCount = insertedTransactions.length;
-  const completionStatus = finalAcceptedRows === 0 && finalDuplicateRows > 0 && finalRejectedRows === 0
-    ? "no_new_transactions"
-    : finalAcceptedRows > 0 && finalDuplicateRows > 0 && finalRejectedRows === 0
-      ? "completed_with_duplicates"
-      : finalRejectedRows > 0 || finalDuplicateRows > 0
-        ? "completed_with_errors"
-        : "completed";
+  const completionStatus = finalDuplicateRows > 0 && finalRejectedRows === 0
+    ? "completed_with_duplicates"
+    : finalRejectedRows > 0 || finalDuplicateRows > 0
+      ? "completed_with_errors"
+      : "completed";
 
   const { error: updateImportError } = await client
     .from("imports")

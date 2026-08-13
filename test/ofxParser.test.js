@@ -41,6 +41,16 @@ test("parseia OFX do Inter com TRNTYPE de transferencia", () => {
   assert.equal(result.transactions[0].movementType, "transfer");
 });
 
+test("prioriza FID e BANKID do Inter sobre textos de transacao que mencionam Nu Pagamentos", () => {
+  const file = fs.readFileSync(path.join("C:/Users/mateu/Downloads", "Extrato-12-07-2026-a-12-08-2026-OFX.ofx"));
+  const result = parseOfxBuffer(file, institutions);
+
+  assert.equal(result.detection.slug, "inter");
+  assert.equal(result.detection.label, "Banco Inter");
+  assert.equal(result.header.fid, "077");
+  assert.equal(result.header.bankId, "077");
+});
+
 test("detecta OFX de cartao Nubank sem depender do nome do arquivo", () => {
   const file = fs.readFileSync(path.join(fixtureDir, "nubank-credit-card.ofx"));
   const result = parseOfxBuffer(file, institutions);
