@@ -28,6 +28,31 @@ function normalizeSupplierName(value) {
   return text || "sem fornecedor";
 }
 
+function supplierSourceForRow(row) {
+  const counterparty = normalizeText(row?.contraparte);
+  const genericCounterparty = !counterparty || ["sem contraparte", "sem fornecedor", "nao informado"].includes(counterparty);
+  return genericCounterparty
+    ? row?.descricao_normalizada || row?.descricao || null
+    : row?.contraparte;
+}
+
+function supplierKeyForRow(row) {
+  return normalizeSupplierName(supplierSourceForRow(row));
+}
+
+function isOwnSupplier(value, appUser) {
+  const normalized = normalizeText(value);
+  if (!normalized || ["eu", "proprio", "propria", "sem fornecedor"].includes(normalized)) return true;
+
+  const ownValues = [
+    appUser?.display_name,
+    appUser?.email,
+    String(appUser?.email || "").split("@")[0],
+  ].map(normalizeText).filter(Boolean);
+
+  return ownValues.some((ownValue) => normalized === ownValue || normalized.includes(ownValue) || ownValue.includes(normalized));
+}
+
 function optionalText(value) {
   const text = String(value ?? "").trim();
   return text || null;
@@ -126,6 +151,7 @@ function buildFilters(query = {}) {
     duplicateOnly: String(query.duplicateOnly ?? "") === "true",
     installmentOnly: String(query.installmentOnly ?? "") === "true",
     creditCardOnly: String(query.creditCardOnly ?? "") === "true",
+    supplierKey: optionalText(query.supplierKey ?? query.supplier_key),
     search: optionalText(query.search),
     page: Math.max(1, Number.parseInt(query.page, 10) || 1),
     pageSize: Math.min(1000, Math.max(1, Number.parseInt(query.pageSize, 10) || 20)),
@@ -172,6 +198,9 @@ function applyTransactionFilters(rows, filters) {
       return false;
     }
     if (filters.creditCardOnly && row.tipo_conta !== "credit_card") {
+      return false;
+    }
+    if (filters.supplierKey && supplierKeyForRow(row) !== filters.supplierKey) {
       return false;
     }
     if (filters.search) {
@@ -352,15 +381,16 @@ function buildMonthlyTrend(transactions) {
   return [...trend.values()].sort((a, b) => a.month.localeCompare(b.month)).slice(-6);
 }
 
-function buildSupplierInsights(transactions) {
+function buildSupplierInsights(transactions, appUser) {
   const expenseRows = transactions.filter((row) => Number(row.valor ?? 0) < 0);
   const totalExpenses = expenseRows.reduce((sum, row) => sum + Math.abs(Number(row.valor ?? 0)), 0);
   const map = new Map();
 
   expenseRows.forEach((row) => {
-    const fallbackName = row.contraparte || row.descricao || row.descricao_normalizada || "Sem fornecedor";
-    const normalizedName = normalizeSupplierName(fallbackName);
-    const label = row.contraparte || row.descricao_normalizada || row.descricao || "Sem fornecedor";
+    const sourceName = supplierSourceForRow(row);
+    const normalizedName = normalizeSupplierName(sourceName);
+    if (isOwnSupplier(normalizedName, appUser)) return;
+    const label = sourceName || "Sem fornecedor";
     const amount = Math.abs(Number(row.valor ?? 0));
     const accountName = row.conta_nome || row.origem_financeira || "Sem conta";
     const institutionName = row.banco || "Sem banco";
@@ -636,7 +666,7 @@ async function listSupplierInsights(client, authUserId, query = {}) {
     conta_nome: accounts.find((item) => item.id === row.conta_financeira_id)?.name ?? row.origem_financeira ?? null,
   }));
   const filtered = applyTransactionFilters(rows, filters);
-  const items = buildSupplierInsights(filtered)
+  const items = buildSupplierInsights(filtered, appUser)
     .filter((item) => item.purchase_count > 1)
     .filter((item) => !filters.search || normalizeText(`${item.supplier_name} ${item.primary_category} ${item.institution_name} ${item.financial_account_name}`).includes(normalizeText(filters.search)));
 
