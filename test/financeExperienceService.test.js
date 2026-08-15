@@ -6,6 +6,7 @@ const {
   accountTypeLabel,
   buildMonthlyTrend,
   buildCardSummary,
+  buildCurrentCardSummary,
   classifyTransactionForTotals,
   computeAccountBalances,
   distributeInstallmentAmounts,
@@ -155,6 +156,55 @@ test("card summary maps purchase-cycle competence to the statement due month", (
   assert.equal(summary.cards[0].open_amount, 100);
   assert.equal(summary.cards[0].statement_amount, 100);
   assert.equal(summary.cards[0].next_due_date, "2026-02-10");
+});
+
+test("current card summary combines the open Nubank cycle with commitments due now", () => {
+  const accounts = [
+    {
+      id: "nubank-card",
+      name: "Nubank Credito",
+      institution_name: "Nubank",
+      account_type: "credit_card",
+      statement_closing_day: 3,
+      statement_due_day: 10,
+    },
+    {
+      id: "inter",
+      name: "Banco Inter",
+      institution_name: "Banco Inter",
+      account_type: "payment",
+      statement_due_day: 25,
+    },
+  ];
+  const transactions = [
+    { conta_financeira_id: "nubank-card", data_competencia: "2026-07-01", valor: -1306.12, tipo_conta: "credit_card", descricao: "Fatura paga" },
+    { conta_financeira_id: "nubank-card", data_competencia: "2026-08-01", valor: -962.74, tipo_conta: "credit_card", descricao: "Fatura aberta" },
+  ];
+  const plans = [
+    {
+      financial_account_id: "inter",
+      merchant_name: "FlexPag(CPFL)",
+      description: "FlexPag(CPFL)",
+      installment_plan_items: [{ due_date: "2026-08-25", amount: 62.6, status_code: "scheduled" }],
+    },
+    {
+      financial_account_id: null,
+      merchant_name: "Mercado Livre",
+      description: "Mercado Livre",
+      installment_plan_items: [{ due_date: "2026-08-20", amount: 659.87, status_code: "scheduled" }],
+    },
+  ];
+
+  const summary = buildCurrentCardSummary(accounts, transactions, plans, new Date("2026-08-15T12:00:00Z"));
+  assert.equal(summary.cards.find((card) => card.id === "nubank-card").open_amount, 962.74);
+  assert.equal(summary.cards.find((card) => card.id === "nubank-card").next_due_date, "2026-09-10");
+  assert.equal(summary.cards.find((card) => card.id === "inter").open_amount, 62.6);
+  assert.deepEqual(summary.commitments, [{
+    id: "commitment-mercado livre",
+    name: "Mercado Livre",
+    amount: 659.87,
+    due_date: "2026-08-20",
+  }]);
 });
 
 test("derives card competence from the month before statement closing", () => {

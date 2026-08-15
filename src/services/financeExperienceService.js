@@ -450,6 +450,34 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
   };
 }
 
+function buildCurrentCardSummary(accounts, transactions, installmentPlans = [], referenceDate = new Date()) {
+  const currentDueCompetence = startOfMonthIso(referenceDate)?.slice(0, 7);
+  const nextDueCompetence = shiftMonthIso(`${currentDueCompetence}-01`, 1)?.slice(0, 7);
+  const currentSummary = buildCardSummary(accounts, transactions, currentDueCompetence, installmentPlans);
+  const nextSummary = buildCardSummary(accounts, transactions, nextDueCompetence, installmentPlans);
+  const importedCardIds = new Set(accounts
+    .filter((account) => account.account_type === "credit_card")
+    .map((account) => account.id));
+  const nextCardsById = new Map(nextSummary.cards.map((card) => [card.id, card]));
+  const cards = currentSummary.cards.map((card) => (
+    importedCardIds.has(card.id) ? nextCardsById.get(card.id) ?? card : card
+  ));
+
+  return {
+    open_amount: roundCurrency(cards.reduce((sum, card) => sum + Number(card.open_amount ?? 0), 0)),
+    closed_amount: roundCurrency(cards.reduce((sum, card) => sum + Number(card.closed_amount ?? 0), 0)),
+    next_due_date: cards.map((card) => card.next_due_date).filter(Boolean).sort()[0] ?? null,
+    utilized_limit_amount: roundCurrency(cards.reduce((sum, card) => sum + Number(card.credit_limit_amount ?? 0), 0)),
+    utilized_limit_ratio: cards.some((card) => card.utilized_limit_ratio != null)
+      ? roundCurrency(cards.reduce((sum, card) => sum + Number(card.utilized_limit_ratio ?? 0), 0)
+        / cards.filter((card) => card.utilized_limit_ratio != null).length)
+      : null,
+    cards,
+    commitments: currentSummary.commitments,
+    reference_competence: currentDueCompetence,
+  };
+}
+
 function buildCategorySummary(transactions, appUser) {
   const map = new Map();
   transactions
@@ -636,7 +664,8 @@ async function getFinanceOverview(client, authUserId, query = {}) {
   const monthlyTotals = summarizeRawAccountFlow(monthTransactions, interAccountIds);
   const monthlyIncome = monthlyTotals.income;
   const monthlyExpense = monthlyTotals.expense;
-  const cardSummary = buildCardSummary(accountBalances, typedTransactions, filters.competence, installmentPlansResult.data ?? []);
+  const selectedCardSummary = buildCardSummary(accountBalances, typedTransactions, filters.competence, installmentPlansResult.data ?? []);
+  const cardSummary = buildCurrentCardSummary(accountBalances, typedTransactions, installmentPlansResult.data ?? []);
   const latestImport = importsResult.data?.[0] ?? null;
 
   return {
@@ -662,6 +691,7 @@ async function getFinanceOverview(client, authUserId, query = {}) {
     },
     account_balances: accountBalances,
     card_summary: cardSummary,
+    selected_card_summary: selectedCardSummary,
     installment_summary: installmentsSummary,
     latest_transactions: filteredTransactions.slice(0, 12),
     import_summary: importsResult.data ?? [],
@@ -1155,6 +1185,7 @@ module.exports = {
   FinanceExperienceError,
   accountTypeLabel,
   buildCardSummary,
+  buildCurrentCardSummary,
   buildMonthlyTrend,
   buildSupplierInsights,
   classifyTransactionForTotals,
