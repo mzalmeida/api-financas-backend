@@ -1,12 +1,21 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+require("dotenv").config({ quiet: true });
 
 const {
   accountTypeLabel,
+  buildMonthlyTrend,
+  buildCardSummary,
+  classifyTransactionForTotals,
+  computeAccountBalances,
   distributeInstallmentAmounts,
   generateInstallmentItems,
+  summarizeTransactionTotals,
 } = require("../src/services/financeExperienceService");
+const { buildDuplicateGroupKey } = require("../src/services/importsService");
 const { matchRule } = require("../src/services/transactionClassificationService");
+
+const appUser = { display_name: "Mateus Zilio de Almeida", email: "mateus@example.com" };
 
 test("distribui arredondamento de parcelas preservando o valor total", () => {
   const amounts = distributeInstallmentAmounts(100, 3);
@@ -40,4 +49,91 @@ test("regra textual de salario reconhece portabilidade e folha", () => {
   assert.equal(matchRule(rule, { description: "Salario recebido - Portabilidade" }), true);
   assert.equal(matchRule(rule, { description: "Credito folha mensal" }), true);
   assert.equal(matchRule(rule, { description: "Compra mercado" }), false);
+});
+
+test("classifies only transfers to the account owner as internal", () => {
+  assert.equal(classifyTransactionForTotals({ valor: -500, descricao: "Pix enviado para Mateus Zilio de Almeida", tipo_conta: "checking" }, appUser), "transfer");
+  assert.equal(classifyTransactionForTotals({ valor: -80, descricao: "Pix enviado para Mercado Pago", tipo_conta: "checking" }, appUser), "expense");
+  assert.equal(classifyTransactionForTotals({ valor: 200, descricao: "Pix recebido de cliente", tipo_conta: "checking" }, appUser), "income");
+});
+
+test("does not count card payments as income or expense", () => {
+  const rows = [
+    { valor: -100, descricao: "Compra no cartao", tipo_conta: "credit_card" },
+    { valor: 100, descricao: "Pagamento recebido", tipo_conta: "credit_card" },
+    { valor: -62.6, descricao: "Pagamento Fatura - Debito Automatico Fatura Cartao Inter", tipo_conta: "payment" },
+  ];
+
+  assert.deepEqual(summarizeTransactionTotals(rows, appUser), { income: 0, expense: 100 });
+});
+
+test("card credits reduce expenses without becoming income", () => {
+  const rows = [
+    { valor: -300, descricao: "Compra", tipo_conta: "credit_card" },
+    { valor: 50, descricao: "Credito de loja", tipo_conta: "credit_card" },
+  ];
+
+  assert.deepEqual(summarizeTransactionTotals(rows, appUser), { income: 0, expense: 250 });
+});
+
+test("uses the latest confirmed OFX ledger balance for cash accounts", () => {
+  const accounts = [{ id: "cash", name: "Conta", account_type: "checking", opening_balance: 0 }];
+  const transactions = [{ conta_financeira_id: "cash", valor: 999 }];
+  const imports = [
+    { financial_account_id: "cash", status_code: "completed", processing_summary: { ledger_balance: 120, ledger_balance_date: "2026-07-31" } },
+    { financial_account_id: "cash", status_code: "completed_with_errors", processing_summary: { ledger_balance: 209.65, ledger_balance_date: "2026-08-12" } },
+  ];
+
+  const [balance] = computeAccountBalances(accounts, transactions, imports);
+  assert.equal(balance.current_balance, 209.65);
+  assert.equal(balance.balance_source, "ofx_ledger");
+});
+
+test("monthly trend keeps all eight imported competences", () => {
+  const rows = Array.from({ length: 8 }, (_, index) => ({
+    data: `2026-${String(index + 1).padStart(2, "0")}-10`,
+    valor: -10,
+    descricao: "Compra",
+    tipo_conta: "checking",
+  }));
+
+  const trend = buildMonthlyTrend(rows, appUser);
+  assert.equal(trend.length, 8);
+  assert.deepEqual(trend[0], { month: "2026-01", income: 0, expense: 10 });
+  assert.deepEqual(trend[7], { month: "2026-08", income: 0, expense: 10 });
+});
+
+test("does not confuse recurring credit card installments that reuse the FITID", () => {
+  const julyInstallment = {
+    fitId: "purchase-123",
+    occurredOn: "2026-07-03",
+    amount: -53.62,
+    description: "Shopee - Parcela 4/8",
+  };
+  const augustInstallment = {
+    ...julyInstallment,
+    occurredOn: "2026-08-03",
+    description: "Shopee - Parcela 5/8",
+  };
+
+  assert.notEqual(buildDuplicateGroupKey(julyInstallment), buildDuplicateGroupKey(augustInstallment));
+  assert.equal(buildDuplicateGroupKey(julyInstallment), buildDuplicateGroupKey({ ...julyInstallment }));
+});
+
+test("card summary does not include transactions from later billing cycles", () => {
+  const accounts = [{
+    id: "card",
+    name: "Nubank",
+    institution_name: "Nubank",
+    account_type: "credit_card",
+    statement_closing_day: 3,
+    statement_due_day: 10,
+  }];
+  const transactions = [
+    { conta_financeira_id: "card", data: "2026-01-10", valor: -100 },
+    { conta_financeira_id: "card", data: "2026-02-10", valor: -200 },
+  ];
+
+  const summary = buildCardSummary(accounts, transactions, "2026-01");
+  assert.equal(summary.cards[0].open_amount, 100);
 });

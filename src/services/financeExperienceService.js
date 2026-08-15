@@ -53,6 +53,35 @@ function isOwnSupplier(value, appUser) {
   return ownValues.some((ownValue) => normalized === ownValue || normalized.includes(ownValue) || ownValue.includes(normalized));
 }
 
+function classifyTransactionForTotals(row, appUser) {
+  const amount = Number(row?.valor ?? row?.amount ?? 0);
+  const description = normalizeText(row?.descricao ?? row?.original_description);
+  const accountType = row?.tipo_conta ?? row?.account_type;
+
+  if (!amount) return "adjustment";
+
+  const isCardPayment = /pagamento recebido|pagamento (?:da )?fatura|debito automatico.*fatura|pagamento.*cartao/.test(description);
+  if (isCardPayment) return "transfer";
+
+  const isPixOrTransfer = /\bpix\b|transfer/.test(description);
+  if (isPixOrTransfer && isOwnSupplier(description, appUser)) return "transfer";
+
+  if (accountType === "credit_card" && amount > 0) return "expense_refund";
+  return amount < 0 ? "expense" : "income";
+}
+
+function summarizeTransactionTotals(transactions, appUser) {
+  return transactions.reduce((summary, row) => {
+    const amount = Number(row?.valor ?? row?.amount ?? 0);
+    const classification = row?.tipo_movimento_calculado || classifyTransactionForTotals(row, appUser);
+
+    if (classification === "income") summary.income += Math.max(0, amount);
+    if (classification === "expense") summary.expense += Math.abs(Math.min(0, amount));
+    if (classification === "expense_refund") summary.expense -= Math.max(0, amount);
+    return summary;
+  }, { income: 0, expense: 0 });
+}
+
 function optionalText(value) {
   const text = String(value ?? "").trim();
   return text || null;
@@ -220,11 +249,33 @@ function applyTransactionFilters(rows, filters) {
   });
 }
 
-function computeAccountBalances(accounts, transactions) {
+function latestLedgerBalances(imports) {
+  const balances = new Map();
+  imports
+    .filter((item) => String(item.status_code || "").startsWith("completed"))
+    .forEach((item) => {
+      const balance = Number(item.processing_summary?.ledger_balance);
+      const balanceDate = item.processing_summary?.ledger_balance_date
+        || item.processing_summary?.period?.end_date
+        || null;
+      if (!item.financial_account_id || !Number.isFinite(balance) || !balanceDate) return;
+
+      const current = balances.get(item.financial_account_id);
+      if (!current || String(balanceDate).localeCompare(String(current.balance_date)) > 0) {
+        balances.set(item.financial_account_id, { balance, balance_date: balanceDate });
+      }
+    });
+  return balances;
+}
+
+function computeAccountBalances(accounts, transactions, imports = []) {
+  const importedBalances = latestLedgerBalances(imports);
   return accounts.map((account) => {
-    const balance = transactions
+    const calculatedBalance = transactions
       .filter((row) => row.conta_financeira_id === account.id)
       .reduce((sum, row) => sum + Number(row.valor ?? 0), Number(account.opening_balance ?? 0));
+    const importedBalance = account.account_type === "credit_card" ? null : importedBalances.get(account.id);
+    const balance = importedBalance?.balance ?? calculatedBalance;
 
     return {
       id: account.id,
@@ -233,6 +284,8 @@ function computeAccountBalances(accounts, transactions) {
       account_type_label: accountTypeLabel(account.account_type),
       institution_name: account.financial_institution?.name ?? "Sem instituicao",
       current_balance: Number(balance.toFixed(2)),
+      balance_as_of: importedBalance?.balance_date ?? null,
+      balance_source: importedBalance ? "ofx_ledger" : "transactions",
       statement_closing_day: account.statement_closing_day,
       statement_due_day: account.statement_due_day,
       credit_limit_amount: account.credit_limit_amount,
@@ -250,13 +303,14 @@ function getCycleWindow(referenceDate, closingDay) {
   const currentClosing = day > safeClosingDay
     ? new Date(Date.UTC(year, month, safeClosingDay))
     : new Date(Date.UTC(year, month - 1, safeClosingDay));
+  const nextClosing = new Date(Date.UTC(currentClosing.getUTCFullYear(), currentClosing.getUTCMonth() + 1, safeClosingDay));
   const previousClosing = new Date(Date.UTC(currentClosing.getUTCFullYear(), currentClosing.getUTCMonth() - 1, safeClosingDay));
   const openStart = new Date(Date.UTC(currentClosing.getUTCFullYear(), currentClosing.getUTCMonth(), currentClosing.getUTCDate() + 1));
   const closedStart = new Date(Date.UTC(previousClosing.getUTCFullYear(), previousClosing.getUTCMonth(), previousClosing.getUTCDate() + 1));
 
   return {
     openStart: formatDate(openStart),
-    openEnd: null,
+    openEnd: formatDate(new Date(nextClosing.getTime() - 86400000)),
     closedStart: formatDate(closedStart),
     closedEnd: formatDate(currentClosing),
     currentClosing,
@@ -340,7 +394,10 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       ? []
       : transactions.filter((transaction) => transaction.conta_financeira_id === card.id);
     const openAmount = cardTransactions
-      .filter((transaction) => String(transaction.data || "").slice(0, 10) >= formatDate(window.currentClosing))
+      .filter((transaction) => {
+        const date = String(transaction.data || "").slice(0, 10);
+        return date >= formatDate(window.currentClosing) && date <= window.openEnd;
+      })
       .filter((transaction) => Number(transaction.valor ?? 0) < 0)
       .reduce((sum, transaction) => sum + Number(transaction.valor ?? 0), 0);
     const closedAmount = cardTransactions
@@ -393,10 +450,10 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
   };
 }
 
-function buildCategorySummary(transactions) {
+function buildCategorySummary(transactions, appUser) {
   const map = new Map();
   transactions
-    .filter((row) => Number(row.valor ?? 0) < 0)
+    .filter((row) => classifyTransactionForTotals(row, appUser) === "expense")
     .forEach((row) => {
       const key = row.categoria || "Sem categoria";
       map.set(key, (map.get(key) ?? 0) + Math.abs(Number(row.valor ?? 0)));
@@ -408,21 +465,25 @@ function buildCategorySummary(transactions) {
     .slice(0, 8);
 }
 
-function buildMonthlyTrend(transactions) {
+function buildMonthlyTrend(transactions, appUser) {
   const trend = new Map();
   transactions.forEach((row) => {
-    const month = String(row.data || "").slice(0, 7);
+    const month = String(row.data_competencia || row.data || "").slice(0, 7);
+    if (!month) return;
     const current = trend.get(month) ?? { month, income: 0, expense: 0 };
-    const amount = Number(row.valor ?? 0);
-    if (amount >= 0) current.income += amount;
-    if (amount < 0) current.expense += Math.abs(amount);
+    const totals = summarizeTransactionTotals([row], appUser);
+    current.income += totals.income;
+    current.expense += totals.expense;
     trend.set(month, current);
   });
-  return [...trend.values()].sort((a, b) => a.month.localeCompare(b.month)).slice(-6);
+  return [...trend.values()]
+    .map((item) => ({ ...item, income: roundCurrency(item.income), expense: roundCurrency(item.expense) }))
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .slice(-12);
 }
 
 function buildSupplierInsights(transactions, appUser) {
-  const expenseRows = transactions.filter((row) => Number(row.valor ?? 0) < 0);
+  const expenseRows = transactions.filter((row) => classifyTransactionForTotals(row, appUser) === "expense");
   const totalExpenses = expenseRows.reduce((sum, row) => sum + Math.abs(Number(row.valor ?? 0)), 0);
   const map = new Map();
 
@@ -542,7 +603,7 @@ async function getFinanceOverview(client, authUserId, query = {}) {
       .eq("user_id", appUser.id)
       .is("archived_at", null)
       .order("name"),
-    client.from("imports").select("id,status_code,finished_at,started_at,accepted_rows,duplicate_rows,total_rows").order("started_at", { ascending: false }).limit(12),
+    client.from("imports").select("id,financial_account_id,status_code,processing_summary,finished_at,started_at,accepted_rows,duplicate_rows,total_rows").order("started_at", { ascending: false }).limit(500),
     client.from("view_transacoes_duplicadas").select("transacao_id").limit(500),
     loadInstallmentsSummary(client, appUser.id, filters.competence),
     client.from("installment_plans").select("id,description,merchant_name,financial_account_id,installment_plan_items(installment_number,due_date,amount,status_code)").eq("user_id", appUser.id).eq("status_code", "active").is("archived_at", null),
@@ -555,19 +616,22 @@ async function getFinanceOverview(client, authUserId, query = {}) {
   const accounts = accountsResult.data ?? [];
   const typedTransactions = (transactionsResult.data ?? []).map((row) => {
     const account = accounts.find((item) => item.id === row.conta_financeira_id) ?? null;
+    const accountType = account?.account_type ?? (row.cartao_id ? "credit_card" : "other");
     return {
       ...row,
-      tipo_conta: account?.account_type ?? (row.cartao_id ? "credit_card" : "other"),
+      tipo_conta: accountType,
       conta_nome: account?.name ?? row.origem_financeira,
+      tipo_movimento_calculado: classifyTransactionForTotals({ ...row, tipo_conta: accountType }, appUser),
     };
   });
   const filteredTransactions = applyTransactionFilters(typedTransactions, filters);
-  const accountBalances = computeAccountBalances(accounts, typedTransactions);
+  const accountBalances = computeAccountBalances(accounts, typedTransactions, importsResult.data ?? []);
   const cashAccounts = accountBalances.filter((account) => account.account_type !== "credit_card");
   const cashBalance = cashAccounts.reduce((sum, account) => sum + Number(account.current_balance ?? 0), 0);
   const monthTransactions = filteredTransactions;
-  const monthlyIncome = monthTransactions.filter((row) => Number(row.valor ?? 0) > 0).reduce((sum, row) => sum + Number(row.valor ?? 0), 0);
-  const monthlyExpense = monthTransactions.filter((row) => Number(row.valor ?? 0) < 0).reduce((sum, row) => sum + Math.abs(Number(row.valor ?? 0)), 0);
+  const monthlyTotals = summarizeTransactionTotals(monthTransactions, appUser);
+  const monthlyIncome = monthlyTotals.income;
+  const monthlyExpense = monthlyTotals.expense;
   const cardSummary = buildCardSummary(accountBalances, typedTransactions, filters.competence, installmentPlansResult.data ?? []);
   const latestImport = importsResult.data?.[0] ?? null;
 
@@ -597,8 +661,8 @@ async function getFinanceOverview(client, authUserId, query = {}) {
     installment_summary: installmentsSummary,
     latest_transactions: filteredTransactions.slice(0, 12),
     import_summary: importsResult.data ?? [],
-    category_summary: buildCategorySummary(monthTransactions),
-    monthly_trend: buildMonthlyTrend(typedTransactions),
+    category_summary: buildCategorySummary(monthTransactions, appUser),
+    monthly_trend: buildMonthlyTrend(typedTransactions, appUser),
   };
 }
 
@@ -1086,13 +1150,18 @@ async function updateDuplicateDecision(client, authUserId, movementId, payload) 
 module.exports = {
   FinanceExperienceError,
   accountTypeLabel,
+  buildCardSummary,
+  buildMonthlyTrend,
   buildSupplierInsights,
+  classifyTransactionForTotals,
+  computeAccountBalances,
   distributeInstallmentAmounts,
   generateInstallmentItems,
   getFinanceOverview,
   listMovements,
   listDuplicateMovements,
   listSupplierInsights,
+  summarizeTransactionTotals,
   listInstallmentPlans,
   createInstallmentPlan,
   linkInstallmentItem,

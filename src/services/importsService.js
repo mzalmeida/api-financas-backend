@@ -37,7 +37,13 @@ function chunk(values, size = 100) {
 
 function buildDuplicateGroupKey(transaction) {
   if (transaction.fitId) {
-    return `fitid:${normalizeText(transaction.fitId)}`.slice(0, 120);
+    const fitIdDescriptor = [
+      `fitid:${normalizeText(transaction.fitId)}`,
+      transaction.occurredOn,
+      transaction.amount?.toFixed?.(2) ?? transaction.amount,
+      normalizeText(transaction.description).slice(0, 40),
+    ].filter(Boolean).join("|");
+    return fitIdDescriptor.slice(0, 120);
   }
 
   const descriptor = [
@@ -1133,6 +1139,7 @@ async function cancelImport(client, authUserId, importId) {
 
 module.exports = {
   ImportFlowError,
+  buildDuplicateGroupKey,
   listImportOptions,
   createFinancialAccount,
   previewOfxImport,
