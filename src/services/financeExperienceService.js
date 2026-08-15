@@ -388,9 +388,12 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
     const cardTransactions = card.is_manual_card
       ? []
       : transactions.filter((transaction) => transaction.conta_financeira_id === card.id);
-    const previousCompetence = shiftMonthIso(`${competence}-01`, -1)?.slice(0, 7);
-    const currentStatementRows = cardTransactions.filter((transaction) => String(transaction.data_competencia || transaction.data || "").slice(0, 7) === competence);
-    const previousStatementRows = cardTransactions.filter((transaction) => String(transaction.data_competencia || transaction.data || "").slice(0, 7) === previousCompetence);
+    // Card transaction competence identifies the purchase cycle; the dashboard
+    // competence identifies the month in which that statement is due.
+    const statementCompetence = shiftMonthIso(`${competence}-01`, -1)?.slice(0, 7);
+    const previousStatementCompetence = shiftMonthIso(`${competence}-01`, -2)?.slice(0, 7);
+    const currentStatementRows = cardTransactions.filter((transaction) => String(transaction.data_competencia || transaction.data || "").slice(0, 7) === statementCompetence);
+    const previousStatementRows = cardTransactions.filter((transaction) => String(transaction.data_competencia || transaction.data || "").slice(0, 7) === previousStatementCompetence);
     const currentStatementTotals = summarizeTransactionTotals(currentStatementRows, null);
     const previousStatementTotals = summarizeTransactionTotals(previousStatementRows, null);
     const manualItems = installmentPlans
@@ -404,7 +407,7 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       : Math.max(0, roundCurrency(currentStatementTotals.expense));
     const previousLiability = card.is_manual_card ? 0 : Math.max(0, roundCurrency(previousStatementTotals.expense));
     const utilized = card.credit_limit_amount ? Number(((currentLiability / card.credit_limit_amount) * 100).toFixed(1)) : null;
-    const nextStatementMonth = shiftMonthIso(`${competence}-01`, 1)?.slice(0, 7);
+    const statementDueMonth = competence;
 
     return {
       id: card.id,
@@ -414,8 +417,8 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       statement_amount: currentLiability,
       next_due_date: card.is_manual_card
         ? manualCurrentItems[0]?.due_date ?? null
-        : card.statement_due_day && effectiveClosingDay && nextStatementMonth
-          ? `${nextStatementMonth}-${String(Math.min(Number(card.statement_due_day), 28)).padStart(2, "0")}`
+        : card.statement_due_day && effectiveClosingDay && statementDueMonth
+          ? `${statementDueMonth}-${String(Math.min(Number(card.statement_due_day), 28)).padStart(2, "0")}`
           : null,
       credit_limit_amount: card.credit_limit_amount,
       utilized_limit_ratio: utilized,

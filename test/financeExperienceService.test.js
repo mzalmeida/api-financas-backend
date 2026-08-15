@@ -120,7 +120,7 @@ test("does not confuse recurring credit card installments that reuse the FITID",
   assert.equal(buildDuplicateGroupKey(julyInstallment), buildDuplicateGroupKey({ ...julyInstallment }));
 });
 
-test("card summary does not include transactions from later billing cycles", () => {
+test("card summary maps purchase-cycle competence to the statement due month", () => {
   const accounts = [{
     id: "card",
     name: "Nubank",
@@ -135,7 +135,7 @@ test("card summary does not include transactions from later billing cycles", () 
     { conta_financeira_id: "card", data: "2026-02-10", data_competencia: "2026-02-01", valor: -200, tipo_conta: "credit_card", descricao: "Compra" },
   ];
 
-  const summary = buildCardSummary(accounts, transactions, "2026-01");
+  const summary = buildCardSummary(accounts, transactions, "2026-02");
   assert.equal(summary.cards[0].open_amount, 100);
   assert.equal(summary.cards[0].statement_amount, 100);
   assert.equal(summary.cards[0].next_due_date, "2026-02-10");
