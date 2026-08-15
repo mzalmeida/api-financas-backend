@@ -10,6 +10,7 @@ const {
   computeAccountBalances,
   distributeInstallmentAmounts,
   generateInstallmentItems,
+  summarizeRawAccountFlow,
   summarizeTransactionTotals,
 } = require("../src/services/financeExperienceService");
 const { buildDuplicateGroupKey, statementCompetenceFromProcessingSummary } = require("../src/services/importsService");
@@ -74,6 +75,21 @@ test("card credits reduce expenses without becoming income", () => {
   ];
 
   assert.deepEqual(summarizeTransactionTotals(rows, appUser), { income: 0, expense: 250 });
+});
+
+test("Inter cash-flow totals include every incoming and outgoing movement", () => {
+  const rows = [
+    { conta_financeira_id: "inter", valor: 4301.85, descricao: "Entrada" },
+    { conta_financeira_id: "inter", valor: -3012.33, descricao: "Contas" },
+    { conta_financeira_id: "inter", valor: -726, descricao: "Pix para conta propria" },
+    { conta_financeira_id: "nubank", valor: -55, descricao: "Outra conta" },
+    { conta_financeira_id: "card", valor: -962.74, descricao: "Cartao" },
+  ];
+
+  assert.deepEqual(summarizeRawAccountFlow(rows, ["inter"]), {
+    income: 4301.85,
+    expense: 3738.33,
+  });
 });
 
 test("uses the latest confirmed OFX ledger balance for cash accounts", () => {

@@ -82,6 +82,18 @@ function summarizeTransactionTotals(transactions, appUser) {
   }, { income: 0, expense: 0 });
 }
 
+function summarizeRawAccountFlow(transactions, accountIds) {
+  const allowedAccountIds = new Set(accountIds);
+  return transactions.reduce((summary, row) => {
+    if (!allowedAccountIds.has(row.conta_financeira_id)) return summary;
+
+    const amount = Number(row?.valor ?? row?.amount ?? 0);
+    if (amount > 0) summary.income += amount;
+    if (amount < 0) summary.expense += Math.abs(amount);
+    return summary;
+  }, { income: 0, expense: 0 });
+}
+
 function optionalText(value) {
   const text = String(value ?? "").trim();
   return text || null;
@@ -617,7 +629,11 @@ async function getFinanceOverview(client, authUserId, query = {}) {
   const cashAccounts = accountBalances.filter((account) => account.account_type !== "credit_card");
   const cashBalance = cashAccounts.reduce((sum, account) => sum + Number(account.current_balance ?? 0), 0);
   const monthTransactions = filteredTransactions;
-  const monthlyTotals = summarizeTransactionTotals(monthTransactions, appUser);
+  const interAccountIds = accountBalances
+    .filter((account) => account.account_type !== "credit_card"
+      && /\binter\b/.test(normalizeText(`${account.name} ${account.institution_name}`)))
+    .map((account) => account.id);
+  const monthlyTotals = summarizeRawAccountFlow(monthTransactions, interAccountIds);
   const monthlyIncome = monthlyTotals.income;
   const monthlyExpense = monthlyTotals.expense;
   const cardSummary = buildCardSummary(accountBalances, typedTransactions, filters.competence, installmentPlansResult.data ?? []);
@@ -1150,6 +1166,7 @@ module.exports = {
   listDuplicateMovements,
   listSupplierInsights,
   summarizeTransactionTotals,
+  summarizeRawAccountFlow,
   listInstallmentPlans,
   createInstallmentPlan,
   linkInstallmentItem,
