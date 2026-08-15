@@ -5,6 +5,7 @@ require("dotenv").config({ quiet: true });
 const {
   accountTypeLabel,
   buildMonthlyTrend,
+  buildRawMonthlyTrend,
   buildCardSummary,
   buildCurrentCardSummary,
   classifyTransactionForTotals,
@@ -118,6 +119,21 @@ test("monthly trend keeps all eight imported competences", () => {
   assert.equal(trend.length, 8);
   assert.deepEqual(trend[0], { month: "2026-01", income: 0, expense: 10 });
   assert.deepEqual(trend[7], { month: "2026-08", income: 0, expense: 10 });
+});
+
+test("Inter trend includes every movement and excludes other accounts", () => {
+  const rows = [
+    { conta_financeira_id: "inter", data: "2026-07-10", valor: 1000 },
+    { conta_financeira_id: "inter", data: "2026-07-11", valor: -700 },
+    { conta_financeira_id: "inter", data: "2026-08-10", valor: 1200 },
+    { conta_financeira_id: "inter", data: "2026-08-11", valor: -900 },
+    { conta_financeira_id: "nubank", data: "2026-08-12", valor: -500 },
+  ];
+
+  assert.deepEqual(buildRawMonthlyTrend(rows, ["inter"]), [
+    { month: "2026-07", income: 1000, expense: 700 },
+    { month: "2026-08", income: 1200, expense: 900 },
+  ]);
 });
 
 test("does not confuse recurring credit card installments that reuse the FITID", () => {

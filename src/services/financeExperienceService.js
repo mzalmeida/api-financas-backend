@@ -510,6 +510,27 @@ function buildMonthlyTrend(transactions, appUser) {
     .slice(-12);
 }
 
+function buildRawMonthlyTrend(transactions, accountIds) {
+  const allowedAccountIds = new Set(accountIds);
+  const trend = new Map();
+  transactions.forEach((row) => {
+    if (!allowedAccountIds.has(row.conta_financeira_id)) return;
+
+    const month = String(row.data_competencia || row.data || "").slice(0, 7);
+    if (!month) return;
+    const amount = Number(row?.valor ?? row?.amount ?? 0);
+    const current = trend.get(month) ?? { month, income: 0, expense: 0 };
+    if (amount > 0) current.income += amount;
+    if (amount < 0) current.expense += Math.abs(amount);
+    trend.set(month, current);
+  });
+
+  return [...trend.values()]
+    .map((item) => ({ ...item, income: roundCurrency(item.income), expense: roundCurrency(item.expense) }))
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .slice(-12);
+}
+
 function buildSupplierInsights(transactions, appUser) {
   const expenseRows = transactions.filter((row) => classifyTransactionForTotals(row, appUser) === "expense");
   const totalExpenses = expenseRows.reduce((sum, row) => sum + Math.abs(Number(row.valor ?? 0)), 0);
@@ -696,7 +717,7 @@ async function getFinanceOverview(client, authUserId, query = {}) {
     latest_transactions: filteredTransactions.slice(0, 12),
     import_summary: importsResult.data ?? [],
     category_summary: buildCategorySummary(monthTransactions, appUser),
-    monthly_trend: buildMonthlyTrend(typedTransactions, appUser),
+    monthly_trend: buildRawMonthlyTrend(typedTransactions, interAccountIds),
   };
 }
 
@@ -1187,6 +1208,7 @@ module.exports = {
   buildCardSummary,
   buildCurrentCardSummary,
   buildMonthlyTrend,
+  buildRawMonthlyTrend,
   buildSupplierInsights,
   classifyTransactionForTotals,
   computeAccountBalances,
