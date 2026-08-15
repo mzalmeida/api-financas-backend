@@ -23,6 +23,7 @@ const {
   linkInstallmentItem,
   updateInstallmentPlan,
   updateMovement,
+  updateMovementsCategory,
   updateDuplicateDecision,
 } = require("../services/financeExperienceService");
 
@@ -77,6 +78,11 @@ router.get("/movements", requireSupabaseAuth, async (req, res) => run(res, async
 router.patch("/movements/:id", requireSupabaseAuth, async (req, res) => run(res, async () => {
   const item = await updateMovement(buildClient(req), req.user.authUserId, req.params.id, req.body);
   res.json({ status: "ok", item });
+}));
+
+router.patch("/movements", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const result = await updateMovementsCategory(buildClient(req), req.user.authUserId, req.body);
+  res.json({ status: "ok", ...result });
 }));
 
 router.get("/duplicates", requireSupabaseAuth, async (req, res) => run(res, async () => {

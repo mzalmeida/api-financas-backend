@@ -12,6 +12,7 @@ const {
   computeAccountBalances,
   distributeInstallmentAmounts,
   generateInstallmentItems,
+  normalizeMovementIds,
   summarizeRawAccountFlow,
   summarizeTransactionTotals,
 } = require("../src/services/financeExperienceService");
@@ -19,6 +20,14 @@ const { buildDuplicateGroupKey, statementCompetenceFromProcessingSummary } = req
 const { learnedPatternFromDescription, matchRule } = require("../src/services/transactionClassificationService");
 
 const appUser = { display_name: "Mateus Zilio de Almeida", email: "mateus@example.com" };
+
+test("normaliza a selecao em lote sem repetir movimentos", () => {
+  assert.deepEqual(normalizeMovementIds([" movement-1 ", "movement-2", "movement-1", "", null]), [
+    "movement-1",
+    "movement-2",
+  ]);
+  assert.deepEqual(normalizeMovementIds("movement-1"), []);
+});
 
 test("distribui arredondamento de parcelas preservando o valor total", () => {
   const amounts = distributeInstallmentAmounts(100, 3);

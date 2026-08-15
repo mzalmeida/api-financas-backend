@@ -100,6 +100,11 @@ function optionalText(value) {
   return text || null;
 }
 
+function normalizeMovementIds(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.map(optionalText).filter(Boolean))];
+}
+
 function roundCurrency(value) {
   return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
 }
@@ -678,7 +683,11 @@ async function getFinanceOverview(client, authUserId, query = {}) {
   const accountBalances = computeAccountBalances(accounts, typedTransactions, importsResult.data ?? []);
   const cashAccounts = accountBalances.filter((account) => account.account_type !== "credit_card");
   const cashBalance = cashAccounts.reduce((sum, account) => sum + Number(account.current_balance ?? 0), 0);
-  const monthTransactions = filteredTransactions;
+  // Os indicadores do dashboard dependem somente da competencia ativa. Filtros
+  // usados em Movimentacoes nao podem alterar silenciosamente os totais gerais.
+  const monthTransactions = typedTransactions.filter((row) => (
+    !filters.competence || String(row.data_competencia || row.data || "").slice(0, 7) === filters.competence
+  ));
   const interAccountIds = accountBalances
     .filter((account) => account.account_type !== "credit_card"
       && /\binter\b/.test(normalizeText(`${account.name} ${account.institution_name}`)))
@@ -1142,18 +1151,6 @@ async function updateMovement(client, authUserId, movementId, payload) {
     throw new FinanceExperienceError(400, "validation_error", "Nenhuma alteracao valida foi informada para a movimentacao.");
   }
 
-  let learnedRule = null;
-  if (categoryId && payload?.learnRule !== false) {
-    try {
-      learnedRule = await learnClassificationRule(client, appUser.id, {
-        description: transaction.normalized_description || transaction.original_description,
-        movementType: transaction.movement_type,
-      }, categoryId);
-    } catch {
-      throw new FinanceExperienceError(502, "classification_rule_error", "Falha ao registrar a regra de categorizacao automatica.");
-    }
-  }
-
   const { data, error } = await client
     .from("transactions")
     .update(patch)
@@ -1166,7 +1163,81 @@ async function updateMovement(client, authUserId, movementId, payload) {
     throw new FinanceExperienceError(502, "supabase_update_error", "Falha ao atualizar a movimentacao.");
   }
 
+  let learnedRule = null;
+  if (categoryId && payload?.learnRule !== false) {
+    try {
+      learnedRule = await learnClassificationRule(client, appUser.id, {
+        description: transaction.normalized_description || transaction.original_description,
+        movementType: transaction.movement_type,
+      }, categoryId);
+    } catch {
+      // O aprendizado e complementar e nunca deve invalidar a categorizacao manual.
+    }
+  }
+
   return { ...data, learned_rule: learnedRule };
+}
+
+async function updateMovementsCategory(client, authUserId, payload) {
+  const appUser = await resolveCurrentAppUser(client, authUserId);
+  const movementIds = normalizeMovementIds(payload?.movementIds);
+  const categoryId = optionalText(payload?.categoryId);
+
+  if (!movementIds.length || !categoryId) {
+    throw new FinanceExperienceError(400, "validation_error", "Informe as movimentacoes e a categoria para atualizar o lote.");
+  }
+  if (movementIds.length > 500) {
+    throw new FinanceExperienceError(400, "batch_too_large", "Selecione no maximo 500 movimentacoes por vez.");
+  }
+
+  await ensureOwnedCategory(client, appUser.id, categoryId);
+  const { data: transactions, error: queryError } = await client
+    .from("transactions")
+    .select("id,original_description,normalized_description,movement_type")
+    .eq("user_id", appUser.id)
+    .in("id", movementIds);
+
+  if (queryError) {
+    throw new FinanceExperienceError(502, "supabase_query_error", "Falha ao localizar as movimentacoes selecionadas.");
+  }
+
+  if ((transactions ?? []).length !== movementIds.length) {
+    throw new FinanceExperienceError(404, "transaction_not_found", "Uma ou mais movimentacoes selecionadas nao foram localizadas.");
+  }
+
+  const { data: updated, error: updateError } = await client
+    .from("transactions")
+    .update({ category_id: categoryId })
+    .eq("user_id", appUser.id)
+    .in("id", movementIds)
+    .select("id,category_id,notes,updated_at");
+
+  if (updateError || (updated ?? []).length !== movementIds.length) {
+    throw new FinanceExperienceError(502, "supabase_update_error", "Falha ao categorizar todas as movimentacoes selecionadas.");
+  }
+
+  let learnedRules = 0;
+  let learningFailures = 0;
+  if (payload?.learnRule !== false) {
+    for (const transaction of transactions) {
+      try {
+        const learned = await learnClassificationRule(client, appUser.id, {
+          description: transaction.normalized_description || transaction.original_description,
+          movementType: transaction.movement_type,
+        }, categoryId);
+        if (learned) learnedRules += 1;
+      } catch {
+        learningFailures += 1;
+      }
+    }
+  }
+
+  return {
+    items: updated,
+    updated_count: updated.length,
+    learned_rules: learnedRules,
+    learning_failures: learningFailures,
+  };
 }
 
 async function updateDuplicateDecision(client, authUserId, movementId, payload) {
@@ -1231,6 +1302,7 @@ module.exports = {
   listMovements,
   listDuplicateMovements,
   listSupplierInsights,
+  normalizeMovementIds,
   summarizeTransactionTotals,
   summarizeRawAccountFlow,
   listInstallmentPlans,
@@ -1238,5 +1310,6 @@ module.exports = {
   linkInstallmentItem,
   updateInstallmentPlan,
   updateMovement,
+  updateMovementsCategory,
   updateDuplicateDecision,
 };

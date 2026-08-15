@@ -179,3 +179,10 @@ O deploy publico no Render deve usar:
 - artefatos da validacao publica:
   - `database/docs/f03e01_render_rollout_validation.json`
   - `database/docs/f03e01_render_rollout_validation.md`
+
+## Correcao operacional de categorizacao em lote
+
+- `PATCH /portal/movements` atualiza uma categoria para ate 500 movimentacoes pertencentes ao usuario autenticado.
+- A categoria e todas as movimentacoes sao validadas antes da atualizacao coletiva.
+- A categorizacao manual e persistida antes do aprendizado automatico; uma falha ao aprender a regra nao desfaz nem bloqueia a alteracao solicitada.
+- Os indicadores mensais do dashboard consideram somente a competencia ativa e nao herdam filtros internos da tela de Movimentacoes.
