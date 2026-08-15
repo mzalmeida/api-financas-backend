@@ -16,7 +16,7 @@ const {
   summarizeTransactionTotals,
 } = require("../src/services/financeExperienceService");
 const { buildDuplicateGroupKey, statementCompetenceFromProcessingSummary } = require("../src/services/importsService");
-const { matchRule } = require("../src/services/transactionClassificationService");
+const { learnedPatternFromDescription, matchRule } = require("../src/services/transactionClassificationService");
 
 const appUser = { display_name: "Mateus Zilio de Almeida", email: "mateus@example.com" };
 
@@ -52,6 +52,18 @@ test("regra textual de salario reconhece portabilidade e folha", () => {
   assert.equal(matchRule(rule, { description: "Salario recebido - Portabilidade" }), true);
   assert.equal(matchRule(rule, { description: "Credito folha mensal" }), true);
   assert.equal(matchRule(rule, { description: "Compra mercado" }), false);
+});
+
+test("regra aprendida ignora numero da parcela e reconhece a proxima compra", () => {
+  const pattern = learnedPatternFromDescription("Shopee *Loja Exemplo - Parcela 3/10");
+  assert.equal(pattern, "shopee *loja exemplo");
+  assert.equal(matchRule({
+    match_field: "description",
+    match_operator: "contains",
+    pattern_text: pattern,
+  }, {
+    description: "SHOPEE *LOJA EXEMPLO - Parcela 4/10",
+  }), true);
 });
 
 test("classifies only transfers to the account owner as internal", () => {

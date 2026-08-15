@@ -1,4 +1,5 @@
 const { adminSupabaseClient } = require("../config/supabaseClients");
+const { learnClassificationRule } = require("./transactionClassificationService");
 
 class FinanceExperienceError extends Error {
   constructor(status, code, message, details = null) {
@@ -143,7 +144,7 @@ async function ensureOwnedTransaction(client, appUserId, transactionId) {
   if (!transactionId) return null;
   const { data, error } = await client
     .from("transactions")
-    .select("id,user_id")
+    .select("id,user_id,original_description,normalized_description,movement_type")
     .eq("id", transactionId)
     .eq("user_id", appUserId)
     .maybeSingle();
@@ -1141,6 +1142,18 @@ async function updateMovement(client, authUserId, movementId, payload) {
     throw new FinanceExperienceError(400, "validation_error", "Nenhuma alteracao valida foi informada para a movimentacao.");
   }
 
+  let learnedRule = null;
+  if (categoryId && payload?.learnRule !== false) {
+    try {
+      learnedRule = await learnClassificationRule(client, appUser.id, {
+        description: transaction.normalized_description || transaction.original_description,
+        movementType: transaction.movement_type,
+      }, categoryId);
+    } catch {
+      throw new FinanceExperienceError(502, "classification_rule_error", "Falha ao registrar a regra de categorizacao automatica.");
+    }
+  }
+
   const { data, error } = await client
     .from("transactions")
     .update(patch)
@@ -1153,7 +1166,7 @@ async function updateMovement(client, authUserId, movementId, payload) {
     throw new FinanceExperienceError(502, "supabase_update_error", "Falha ao atualizar a movimentacao.");
   }
 
-  return data;
+  return { ...data, learned_rule: learnedRule };
 }
 
 async function updateDuplicateDecision(client, authUserId, movementId, payload) {

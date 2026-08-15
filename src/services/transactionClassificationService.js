@@ -9,6 +9,17 @@ function normalizeText(value) {
     .toLowerCase();
 }
 
+function learnedPatternFromDescription(value) {
+  return normalizeText(value)
+    .replace(/\bparcela\s+\d+\s*\/\s*\d+\b/g, " ")
+    .replace(/\b\d{2}[./-]\d{2}(?:[./-]\d{2,4})?\b/g, " ")
+    .replace(/\b\d{3,}\b/g, " ")
+    .replace(/\s*[-|]\s*$/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 220);
+}
+
 function matchRule(rule, transaction) {
   const sourceMap = {
     description: transaction.description,
@@ -156,7 +167,63 @@ async function applyClassificationRuleSet(client, appUserId, transaction) {
   };
 }
 
+async function learnClassificationRule(client, appUserId, transaction, categoryId) {
+  const patternText = learnedPatternFromDescription(transaction.description);
+  if (!categoryId || patternText.length < 4) return null;
+
+  const { data: existing, error: existingError } = await client
+    .from("transaction_classification_rules")
+    .select("id")
+    .eq("user_id", appUserId)
+    .eq("match_field", "description")
+    .eq("match_operator", "contains")
+    .eq("pattern_text", patternText)
+    .is("archived_at", null)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  const payload = {
+    category_id: categoryId,
+    rule_name: `Aprendida: ${patternText}`.slice(0, 120),
+    pattern_text: patternText,
+    priority: 50,
+    target_movement_type: null,
+    notes: "Regra criada automaticamente a partir de categorizacao manual.",
+    is_active: true,
+    archived_at: null,
+  };
+
+  if (existing?.id) {
+    const { data, error } = await client
+      .from("transaction_classification_rules")
+      .update(payload)
+      .eq("id", existing.id)
+      .eq("user_id", appUserId)
+      .select("id,category_id,pattern_text")
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  const { data, error } = await client
+    .from("transaction_classification_rules")
+    .insert({
+      user_id: appUserId,
+      match_field: "description",
+      match_operator: "contains",
+      ...payload,
+    })
+    .select("id,category_id,pattern_text")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 module.exports = {
   applyClassificationRuleSet,
+  learnedPatternFromDescription,
+  learnClassificationRule,
   matchRule,
 };
