@@ -327,10 +327,6 @@ function buildSafeMonthDate(baseDate, monthOffset) {
 }
 
 function buildCardSummary(accounts, transactions, competence, installmentPlans = []) {
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const referenceDate = competence === currentMonth
-    ? new Date()
-    : new Date(Date.UTC(Number(String(competence).slice(0, 4)), Number(String(competence).slice(5, 7)) || 1, 0, 12));
   const cards = accounts.filter((account) => account.account_type === "credit_card");
   const cardAccountIds = new Set(cards.map((account) => account.id));
   const manualCardAccounts = accounts.filter((account) => {
@@ -389,33 +385,26 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
   const rows = summaryAccounts.map((card) => {
     const cardText = normalizeText(`${card.name} ${card.institution_name}`);
     const effectiveClosingDay = /nubank/.test(cardText) ? 3 : card.statement_closing_day;
-    const window = getCycleWindow(referenceDate, effectiveClosingDay || 1);
     const cardTransactions = card.is_manual_card
       ? []
       : transactions.filter((transaction) => transaction.conta_financeira_id === card.id);
-    const openAmount = cardTransactions
-      .filter((transaction) => {
-        const date = String(transaction.data || "").slice(0, 10);
-        return date >= formatDate(window.currentClosing) && date <= window.openEnd;
-      })
-      .filter((transaction) => Number(transaction.valor ?? 0) < 0)
-      .reduce((sum, transaction) => sum + Number(transaction.valor ?? 0), 0);
-    const closedAmount = cardTransactions
-      .filter((transaction) => {
-        const date = String(transaction.data || "").slice(0, 10);
-        return date >= window.closedStart && date <= window.closedEnd;
-      })
-      .filter((transaction) => Number(transaction.valor ?? 0) < 0)
-      .reduce((sum, transaction) => sum + Number(transaction.valor ?? 0), 0);
+    const previousCompetence = shiftMonthIso(`${competence}-01`, -1)?.slice(0, 7);
+    const currentStatementRows = cardTransactions.filter((transaction) => String(transaction.data_competencia || transaction.data || "").slice(0, 7) === competence);
+    const previousStatementRows = cardTransactions.filter((transaction) => String(transaction.data_competencia || transaction.data || "").slice(0, 7) === previousCompetence);
+    const currentStatementTotals = summarizeTransactionTotals(currentStatementRows, null);
+    const previousStatementTotals = summarizeTransactionTotals(previousStatementRows, null);
     const manualItems = installmentPlans
       .filter((plan) => plan.financial_account_id === card.id)
       .flatMap((plan) => plan.installment_plan_items ?? [])
       .filter((item) => !["paid", "completed", "cancelled"].includes(String(item.status_code || "").toLowerCase()));
     const manualCurrentItems = manualItems.filter((item) => String(item.due_date || "").slice(0, 7) === competence);
     const manualAmount = manualCurrentItems.reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
-    const currentLiability = Math.max(0, -Number(openAmount.toFixed(2))) || Number(manualAmount.toFixed(2));
-    const previousLiability = Math.max(0, -Number(closedAmount.toFixed(2)));
+    const currentLiability = card.is_manual_card
+      ? Number(manualAmount.toFixed(2))
+      : Math.max(0, roundCurrency(currentStatementTotals.expense));
+    const previousLiability = card.is_manual_card ? 0 : Math.max(0, roundCurrency(previousStatementTotals.expense));
     const utilized = card.credit_limit_amount ? Number(((currentLiability / card.credit_limit_amount) * 100).toFixed(1)) : null;
+    const nextStatementMonth = shiftMonthIso(`${competence}-01`, 1)?.slice(0, 7);
 
     return {
       id: card.id,
@@ -423,15 +412,11 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       open_amount: currentLiability,
       closed_amount: previousLiability,
       statement_amount: currentLiability,
-      next_due_date: card.statement_due_day && effectiveClosingDay
-        ? formatDate(new Date(Date.UTC(
-          window.currentClosing.getUTCFullYear(),
-          window.currentClosing.getUTCMonth() + 1,
-          Math.min(Number(card.statement_due_day), 28),
-        )))
-        : card.statement_due_day
-          ? `${competence}-${String(card.statement_due_day).padStart(2, "0")}`
-        : manualCurrentItems[0]?.due_date ?? null,
+      next_due_date: card.is_manual_card
+        ? manualCurrentItems[0]?.due_date ?? null
+        : card.statement_due_day && effectiveClosingDay && nextStatementMonth
+          ? `${nextStatementMonth}-${String(Math.min(Number(card.statement_due_day), 28)).padStart(2, "0")}`
+          : null,
       credit_limit_amount: card.credit_limit_amount,
       utilized_limit_ratio: utilized,
     };

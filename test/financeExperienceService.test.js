@@ -12,7 +12,7 @@ const {
   generateInstallmentItems,
   summarizeTransactionTotals,
 } = require("../src/services/financeExperienceService");
-const { buildDuplicateGroupKey } = require("../src/services/importsService");
+const { buildDuplicateGroupKey, statementCompetenceFromProcessingSummary } = require("../src/services/importsService");
 const { matchRule } = require("../src/services/transactionClassificationService");
 
 const appUser = { display_name: "Mateus Zilio de Almeida", email: "mateus@example.com" };
@@ -130,11 +130,24 @@ test("card summary does not include transactions from later billing cycles", () 
     statement_due_day: 10,
   }];
   const transactions = [
-    { conta_financeira_id: "card", data: "2026-01-10", valor: -100 },
-    { conta_financeira_id: "card", data: "2026-02-10", valor: -200 },
+    { conta_financeira_id: "card", data: "2026-01-10", data_competencia: "2026-01-01", valor: -120, tipo_conta: "credit_card", descricao: "Compra" },
+    { conta_financeira_id: "card", data: "2026-01-15", data_competencia: "2026-01-01", valor: 20, tipo_conta: "credit_card", descricao: "Credito de loja" },
+    { conta_financeira_id: "card", data: "2026-02-10", data_competencia: "2026-02-01", valor: -200, tipo_conta: "credit_card", descricao: "Compra" },
   ];
 
   const summary = buildCardSummary(accounts, transactions, "2026-01");
   assert.equal(summary.cards[0].open_amount, 100);
   assert.equal(summary.cards[0].statement_amount, 100);
+  assert.equal(summary.cards[0].next_due_date, "2026-02-10");
+});
+
+test("derives card competence from the month before statement closing", () => {
+  assert.equal(statementCompetenceFromProcessingSummary({
+    statement_kind: "credit_card",
+    period: { end_date: "2026-09-03" },
+  }), "2026-08-01");
+  assert.equal(statementCompetenceFromProcessingSummary({
+    statement_kind: "bank_account",
+    period: { end_date: "2026-09-03" },
+  }), null);
 });

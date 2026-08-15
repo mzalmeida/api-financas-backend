@@ -55,6 +55,16 @@ function buildDuplicateGroupKey(transaction) {
   return descriptor.slice(0, 120) || null;
 }
 
+function statementCompetenceFromProcessingSummary(processingSummary) {
+  if (processingSummary?.statement_kind !== "credit_card") return null;
+  const periodEnd = processingSummary?.period?.end_date;
+  if (!periodEnd) return null;
+
+  const date = new Date(`${String(periodEnd).slice(0, 10)}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - 1, 1)).toISOString().slice(0, 10);
+}
+
 function buildTransactionDedupHash(accountId, transaction) {
   return sha256(JSON.stringify({
     accountId,
@@ -449,6 +459,7 @@ async function insertPreviewImport(client, context, file, parsed, rows, fileHash
   const rowSummary = summarizeRows(rows);
   const processingSummary = {
     stage: PREVIEW_STAGE,
+    statement_kind: parsed.header.statementKind,
     warnings,
     institution_detection: parsed.detection,
     period: {
@@ -848,7 +859,7 @@ async function buildTransactionPayload(client, appUserId, importRow, importRecor
     posting_status: "posted",
     reconciliation_status: "pending",
     occurred_on: importRow.extracted_occurrence_date,
-    competence_on: null,
+    competence_on: statementCompetenceFromProcessingSummary(importRecord.processing_summary),
     posted_on: normalizedPayload.posted_on || importRow.extracted_occurrence_date,
     original_description: description,
     normalized_description: normalizedPayload.normalized_description || normalizeText(description).slice(0, 500),
@@ -1140,6 +1151,7 @@ async function cancelImport(client, authUserId, importId) {
 module.exports = {
   ImportFlowError,
   buildDuplicateGroupKey,
+  statementCompetenceFromProcessingSummary,
   listImportOptions,
   createFinancialAccount,
   previewOfxImport,
