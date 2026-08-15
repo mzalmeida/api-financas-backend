@@ -422,7 +422,7 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       name: card.name,
       open_amount: currentLiability,
       closed_amount: previousLiability,
-      statement_amount: Math.max(currentLiability, previousLiability),
+      statement_amount: currentLiability,
       next_due_date: card.statement_due_day && effectiveClosingDay
         ? formatDate(new Date(Date.UTC(
           window.currentClosing.getUTCFullYear(),

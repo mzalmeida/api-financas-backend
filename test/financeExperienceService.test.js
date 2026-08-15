@@ -136,4 +136,5 @@ test("card summary does not include transactions from later billing cycles", () 
 
   const summary = buildCardSummary(accounts, transactions, "2026-01");
   assert.equal(summary.cards[0].open_amount, 100);
+  assert.equal(summary.cards[0].statement_amount, 100);
 });
