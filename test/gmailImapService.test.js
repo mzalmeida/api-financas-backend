@@ -68,6 +68,20 @@ test("mensagem confiavel exige remetente autorizado e assunto de extrato", () =>
     assert.equal(loaded.service.matchesTrustedMessage("todomundo@nubank.com.br", "Extrato da sua conta do Nubank", allowed), "nubank");
     assert.equal(loaded.service.matchesTrustedMessage("todomundo@nubank.com.br", "Promocao especial", allowed), null);
     assert.equal(loaded.service.matchesTrustedMessage("fraude@exemplo.com", "Seu extrato", allowed), null);
+    assert.equal(
+      loaded.service.matchesTrustedMessage("no-reply@inter.co", "Documento financeiro disponivel", allowed, ["documento financeiro"]),
+      "inter",
+    );
+  } finally {
+    loaded.restore();
+  }
+});
+
+test("termos de assunto podem ser configurados por lista", () => {
+  const loaded = loadService();
+  try {
+    assert.deepEqual(loaded.service.parseSubjectTerms("Extrato, Fatura disponivel"), ["extrato", "fatura disponivel"]);
+    assert.deepEqual(loaded.service.parseSubjectTerms(""), ["extrato"]);
   } finally {
     loaded.restore();
   }

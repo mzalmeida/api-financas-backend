@@ -48,6 +48,14 @@ function parseAllowedSenders(value = process.env.GMAIL_IMAP_ALLOWED_SENDERS) {
   return new Set(configured.length ? configured : DEFAULT_ALLOWED_SENDERS);
 }
 
+function parseSubjectTerms(value = process.env.GMAIL_IMAP_SUBJECT_TERMS) {
+  const configured = String(value || "")
+    .split(",")
+    .map((item) => normalizeText(item))
+    .filter(Boolean);
+  return configured.length ? configured : ["extrato"];
+}
+
 function getImapConfig() {
   return {
     host: process.env.GMAIL_IMAP_HOST || "imap.gmail.com",
@@ -57,6 +65,7 @@ function getImapConfig() {
     password: String(process.env.GMAIL_IMAP_APP_PASSWORD || "").replace(/\s+/g, ""),
     mailbox: String(process.env.GMAIL_IMAP_MAILBOX || "INBOX").trim() || "INBOX",
     allowedSenders: parseAllowedSenders(),
+    subjectTerms: parseSubjectTerms(),
     lookbackDays: parsePositiveInteger(process.env.GMAIL_IMAP_LOOKBACK_DAYS, DEFAULT_LOOKBACK_DAYS, 365),
     messageLimit: parsePositiveInteger(process.env.GMAIL_IMAP_MESSAGE_LIMIT, DEFAULT_MESSAGE_LIMIT, 250),
   };
@@ -80,10 +89,16 @@ function institutionFromSender(sender, allowedSenders = parseAllowedSenders()) {
   return null;
 }
 
-function matchesTrustedMessage(sender, subject, allowedSenders = parseAllowedSenders()) {
+function matchesTrustedMessage(
+  sender,
+  subject,
+  allowedSenders = parseAllowedSenders(),
+  subjectTerms = parseSubjectTerms(),
+) {
   const institutionSlug = institutionFromSender(sender, allowedSenders);
   const normalizedSubject = normalizeText(subject);
-  return institutionSlug && normalizedSubject.includes("extrato") ? institutionSlug : null;
+  const subjectAllowed = subjectTerms.some((term) => normalizedSubject.includes(term));
+  return institutionSlug && subjectAllowed ? institutionSlug : null;
 }
 
 function isOfxAttachment(attachment) {
@@ -414,7 +429,12 @@ async function syncImapForAppUser(appUser) {
           summary.messages_scanned += 1;
           const parsedMessage = await simpleParser(message.source);
           const sender = normalizeText(parsedMessage.from?.value?.[0]?.address);
-          const institutionSlug = matchesTrustedMessage(sender, parsedMessage.subject, config.allowedSenders);
+          const institutionSlug = matchesTrustedMessage(
+            sender,
+            parsedMessage.subject,
+            config.allowedSenders,
+            config.subjectTerms,
+          );
           if (!institutionSlug) {
             summary.ignored += 1;
             continue;
@@ -517,6 +537,7 @@ module.exports = {
   isOfxAttachment,
   matchesTrustedMessage,
   parseAllowedSenders,
+  parseSubjectTerms,
   resolveFinancialAccount,
   syncImapImports,
   syncScheduledImapImports,

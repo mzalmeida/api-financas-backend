@@ -94,6 +94,7 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - `GMAIL_IMAP_APP_PASSWORD` recebe somente uma senha de aplicativo Google, nunca a senha normal
 - `GMAIL_SYNC_SECRET` protege a chamada automatica e deve ter no minimo 32 caracteres
 - `GMAIL_IMAP_ALLOWED_SENDERS` permite substituir a lista controlada de remetentes
+- `GMAIL_IMAP_SUBJECT_TERMS` define os termos aceitos no assunto, separados por virgula
 - `JWT_SECRET` somente se alguma dependencia legada residual ainda precisar
 - `OWNER_EMAIL`
 - `OWNER_DISPLAY_NAME`
