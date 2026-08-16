@@ -109,6 +109,8 @@ Nunca registrar valores reais em documentacao, Git, logs ou scripts versionados.
 - o leitor pesquisa somente remetentes autorizados, exige assunto relacionado a extrato e aceita apenas anexos `.ofx` de ate 5 MB;
 - Nubank conta corrente, Nubank credito e Inter conta sao resolvidos separadamente pelo conteudo do OFX;
 - os anexos entram como preview com origem `integration` e continuam exigindo confirmacao no portal;
+- o hash e comparado com todo o historico de arquivos, inclusive uploads manuais, antes de criar um preview;
+- apos a primeira leitura, a busca parte da ultima sincronizacao com margem controlada de 30 minutos;
 - `POST /integrations/gmail/scheduled-sync` permite acionamento pelo Supabase Cron com segredo dedicado;
 - nenhuma mensagem e apagada, movida ou marcada como lida.
 

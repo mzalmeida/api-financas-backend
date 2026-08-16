@@ -11,9 +11,10 @@ const DEFAULT_ALLOWED_SENDERS = [
   "todomundo@nubank.com.br",
   "no-reply@inter.co",
 ];
-const DEFAULT_LOOKBACK_DAYS = 45;
+const DEFAULT_LOOKBACK_DAYS = 1;
 const DEFAULT_MESSAGE_LIMIT = 50;
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const SYNC_OVERLAP_MINUTES = 30;
 
 class GmailImapError extends Error {
   constructor(status, code, message, details = null) {
@@ -262,6 +263,23 @@ async function saveMessageRecord(existing, payload) {
 }
 
 async function findImportedFileHash(userId, fileHash) {
+  const { data: importedFiles, error: importedFilesError } = await adminSupabaseClient
+    .from("import_files")
+    .select("id,import_id,imports!inner(id,user_id,status_code)")
+    .eq("file_hash", fileHash)
+    .eq("imports.user_id", userId)
+    .limit(1);
+  if (importedFilesError) {
+    throw new GmailImapError(502, "supabase_query_error", "Falha ao verificar o hash no historico de importacoes.");
+  }
+  if (importedFiles[0]) {
+    return {
+      id: `import-file:${importedFiles[0].id}`,
+      import_id: importedFiles[0].import_id,
+      status_code: importedFiles[0].imports.status_code,
+    };
+  }
+
   const { data, error } = await adminSupabaseClient
     .from("gmail_messages")
     .select("id,import_id,status_code")
@@ -281,7 +299,7 @@ async function processAttachment({ appUser, integration, context, message, parse
   const existing = await findMessageRecord(appUser.id, messageId, attachmentId);
 
   if (existing?.import_id || ["duplicate", "ignored", "imported", "pending_confirmation"].includes(existing?.status_code)) {
-    return { status: existing.status_code, import_id: existing.import_id, file_name: existing.file_name };
+    return { status: "already_processed", import_id: existing.import_id, file_name: existing.file_name };
   }
 
   const baseRecord = {
@@ -413,7 +431,11 @@ async function syncImapForAppUser(appUser) {
     await client.connect();
     const lock = await client.getMailboxLock(config.mailbox);
     try {
-      const since = new Date(Date.now() - config.lookbackDays * 24 * 60 * 60 * 1000);
+      const configuredSince = Date.now() - config.lookbackDays * 24 * 60 * 60 * 1000;
+      const lastSyncSince = integration.last_sync_at
+        ? new Date(integration.last_sync_at).getTime() - SYNC_OVERLAP_MINUTES * 60 * 1000
+        : Number.NaN;
+      const since = new Date(Number.isFinite(lastSyncSince) ? Math.max(configuredSince, lastSyncSince) : configuredSince);
       const senderQueries = [...config.allowedSenders].map((sender) => ({ from: sender }));
       const senderFilter = senderQueries.length > 1
         ? { or: senderQueries }

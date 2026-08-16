@@ -87,6 +87,19 @@ test("termos de assunto podem ser configurados por lista", () => {
   }
 });
 
+test("janela inicial segura usa um dia por padrao", () => {
+  const previous = process.env.GMAIL_IMAP_LOOKBACK_DAYS;
+  const loaded = loadService();
+  try {
+    delete process.env.GMAIL_IMAP_LOOKBACK_DAYS;
+    assert.equal(loaded.service.getImapConfig().lookbackDays, 1);
+  } finally {
+    if (previous == null) delete process.env.GMAIL_IMAP_LOOKBACK_DAYS;
+    else process.env.GMAIL_IMAP_LOOKBACK_DAYS = previous;
+    loaded.restore();
+  }
+});
+
 test("selecao de conta separa Nubank corrente de Nubank credito", () => {
   const loaded = loadService();
   try {

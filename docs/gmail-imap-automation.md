@@ -36,7 +36,7 @@ GMAIL_IMAP_HOST=imap.gmail.com
 GMAIL_IMAP_PORT=993
 GMAIL_IMAP_SECURE=true
 GMAIL_IMAP_MAILBOX=INBOX
-GMAIL_IMAP_LOOKBACK_DAYS=45
+GMAIL_IMAP_LOOKBACK_DAYS=1
 GMAIL_IMAP_MESSAGE_LIMIT=50
 GMAIL_IMAP_ALLOWED_SENDERS=todomundo@nubank.com.br,no-reply@inter.co
 GMAIL_IMAP_SUBJECT_TERMS=extrato
@@ -73,3 +73,5 @@ O segredo deve ser armazenado no Supabase Vault. Nao inserir o valor literal em 
 4. Um preview e registrado no historico com origem `integration`.
 5. O usuario revisa e confirma pelo fluxo normal do portal.
 6. Uma nova execucao ignora mensagens, anexos e hashes ja registrados.
+
+Depois da primeira execucao, a pesquisa usa `last_sync_at` com sobreposicao de 30 minutos. A margem evita perder mensagens entregues com atraso sem reler todo o periodo inicial.
