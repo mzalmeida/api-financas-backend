@@ -8,6 +8,7 @@ const HISTORY_LIMIT = 20;
 const PREVIEW_STAGE = "pending_confirmation";
 const SUPPORTED_ACCOUNT_TYPES = new Set(["checking", "savings", "investment", "payment", "cash", "other", "wallet", "manual", "credit_card"]);
 const SUPPORTED_IMPORT_STATUSES = new Set(["pending", "pending_confirmation", "processing", "completed", "completed_with_errors", "completed_with_duplicates", "failed", "cancelled"]);
+const SUPPORTED_IMPORT_SOURCES = new Set(["file_upload", "manual_upload", "integration", "system_reprocess", "other"]);
 
 class ImportFlowError extends Error {
   constructor(status, code, message, details = null) {
@@ -310,6 +311,7 @@ async function resolvePreviewContext(client, authUserId, payload) {
     account,
     requestedInstitutionId,
     requestedInstitution: institution,
+    importSource: SUPPORTED_IMPORT_SOURCES.has(payload?.importSource) ? payload.importSource : "file_upload",
   };
 }
 
@@ -483,7 +485,7 @@ async function insertPreviewImport(client, context, file, parsed, rows, fileHash
       financial_institution_id: context.requestedInstitutionId || parsed.detection.institutionId || context.account.financial_institution_id,
       financial_account_id: context.account.id,
       import_format: "ofx",
-      import_source: "file_upload",
+      import_source: context.importSource,
       status_code: importStatus,
       batch_hash: fileHash,
       total_rows: rowSummary.total,

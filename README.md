@@ -88,7 +88,12 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `GMAIL_INTEGRATION_ENABLED` opcional; manter ausente ou `false` enquanto a automacao por e-mail estiver adiada
+- `GMAIL_INTEGRATION_ENABLED=true` habilita as rotas de integracao por e-mail
+- `GMAIL_INTEGRATION_MODE=imap` seleciona o fluxo sem Gmail API
+- `GMAIL_IMAP_USER` identifica a caixa que recebe os OFX
+- `GMAIL_IMAP_APP_PASSWORD` recebe somente uma senha de aplicativo Google, nunca a senha normal
+- `GMAIL_SYNC_SECRET` protege a chamada automatica e deve ter no minimo 32 caracteres
+- `GMAIL_IMAP_ALLOWED_SENDERS` permite substituir a lista controlada de remetentes
 - `JWT_SECRET` somente se alguma dependencia legada residual ainda precisar
 - `OWNER_EMAIL`
 - `OWNER_DISPLAY_NAME`
@@ -96,6 +101,17 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - `OWNER_STATUS_CODE`
 
 Nunca registrar valores reais em documentacao, Git, logs ou scripts versionados.
+
+## Automacao Gmail por IMAP
+
+- o modo `imap` substitui o OAuth como caminho ativo sem depender de Google Cloud ou Gmail API;
+- o leitor pesquisa somente remetentes autorizados, exige assunto relacionado a extrato e aceita apenas anexos `.ofx` de ate 5 MB;
+- Nubank conta corrente, Nubank credito e Inter conta sao resolvidos separadamente pelo conteudo do OFX;
+- os anexos entram como preview com origem `integration` e continuam exigindo confirmacao no portal;
+- `POST /integrations/gmail/scheduled-sync` permite acionamento pelo Supabase Cron com segredo dedicado;
+- nenhuma mensagem e apagada, movida ou marcada como lida.
+
+Detalhes operacionais: `docs/gmail-imap-automation.md`.
 
 ## Fluxo de autenticacao
 

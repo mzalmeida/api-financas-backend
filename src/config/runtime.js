@@ -29,6 +29,7 @@ function parseBooleanFlag(value) {
 }
 
 const gmailIntegrationEnabled = parseBooleanFlag(process.env.GMAIL_INTEGRATION_ENABLED);
+const gmailIntegrationMode = String(process.env.GMAIL_INTEGRATION_MODE || "oauth").trim().toLowerCase();
 
 function isOriginAllowed(origin) {
   return allowedOrigins.includes(origin);
@@ -37,5 +38,6 @@ function isOriginAllowed(origin) {
 module.exports = {
   allowedOrigins,
   gmailIntegrationEnabled,
+  gmailIntegrationMode,
   isOriginAllowed,
 };

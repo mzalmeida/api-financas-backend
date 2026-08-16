@@ -7,6 +7,7 @@ const appPath = path.join(__dirname, "..", "src", "app.js");
 const runtimePath = path.join(__dirname, "..", "src", "config", "runtime.js");
 const middlewarePath = path.join(__dirname, "..", "src", "middlewares", "requireSupabaseAuth.js");
 const gmailServicePath = path.join(__dirname, "..", "src", "services", "gmailService.js");
+const gmailImapServicePath = path.join(__dirname, "..", "src", "services", "gmailImapService.js");
 const gmailRoutePath = path.join(__dirname, "..", "src", "routes", "gmail.js");
 const authRoutePath = path.join(__dirname, "..", "src", "routes", "auth.js");
 const gastosRoutePath = path.join(__dirname, "..", "src", "routes", "gastos.js");
@@ -44,12 +45,13 @@ function restoreModules(snapshot) {
   }
 }
 
-function loadApp({ gmailEnabled }) {
+function loadApp({ gmailEnabled, gmailMode = "oauth" }) {
   const touchedPaths = [
     appPath,
     runtimePath,
     middlewarePath,
     gmailServicePath,
+    gmailImapServicePath,
     gmailRoutePath,
     authRoutePath,
     gastosRoutePath,
@@ -63,6 +65,7 @@ function loadApp({ gmailEnabled }) {
   setMockModule(runtimePath, {
     allowedOrigins: ["https://api-financas-frontend.onrender.com"],
     gmailIntegrationEnabled: gmailEnabled,
+    gmailIntegrationMode: gmailMode,
     isOriginAllowed: () => true,
   });
 
@@ -113,6 +116,37 @@ function loadApp({ gmailEnabled }) {
       summary: { imports_created: 1 },
       messages: [],
     }),
+  });
+
+  setMockModule(gmailImapServicePath, {
+    GmailImapError: class GmailImapError extends Error {
+      constructor(status, code, message, details = null) {
+        super(message);
+        this.status = status;
+        this.code = code;
+        this.details = details;
+      }
+    },
+    getImapStatus: async () => ({
+      integration: {
+        mode: "imap",
+        configured: true,
+        connected: true,
+        gmail_email_masked: "m***@gmail.com",
+        last_sync_status: "synced",
+      },
+    }),
+    syncImapImports: async () => ({
+      last_sync_status: "synced",
+      summary: { imports_created: 1 },
+      messages: [],
+    }),
+    syncScheduledImapImports: async () => ({
+      last_sync_status: "synced",
+      summary: { imports_created: 1 },
+      messages: [],
+    }),
+    validateScheduledSecret: (value) => value === "valid-sync-secret",
   });
 
   setMockModule(authRoutePath, buildPassThroughRouter());
@@ -240,6 +274,45 @@ test("feature Gmail desativada remove o router e retorna 404", async () => {
       erro: "Rota nao encontrada",
       codigo: "route_not_found",
     });
+  } finally {
+    cleanup();
+  }
+});
+
+test("modo IMAP usa status e sincronizacao sem OAuth", async () => {
+  const { app, cleanup } = loadApp({ gmailEnabled: true, gmailMode: "imap" });
+  try {
+    const statusResult = await request(app, "/integrations/gmail/status", {
+      headers: { Authorization: "Bearer valid-token" },
+    });
+    assert.equal(statusResult.response.status, 200);
+    assert.equal(statusResult.body.integration.mode, "imap");
+
+    const syncResult = await request(app, "/integrations/gmail/sync", {
+      method: "POST",
+      headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" },
+      body: "{}",
+    });
+    assert.equal(syncResult.response.status, 200);
+    assert.equal(syncResult.body.summary.imports_created, 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test("sincronizacao agendada exige segredo dedicado", async () => {
+  const { app, cleanup } = loadApp({ gmailEnabled: true, gmailMode: "imap" });
+  try {
+    const denied = await request(app, "/integrations/gmail/scheduled-sync", { method: "POST" });
+    assert.equal(denied.response.status, 401);
+    assert.equal(denied.body.codigo, "invalid_sync_secret");
+
+    const allowed = await request(app, "/integrations/gmail/scheduled-sync", {
+      method: "POST",
+      headers: { "x-gmail-sync-secret": "valid-sync-secret" },
+    });
+    assert.equal(allowed.response.status, 200);
+    assert.equal(allowed.body.last_sync_status, "synced");
   } finally {
     cleanup();
   }
