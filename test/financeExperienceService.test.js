@@ -261,12 +261,60 @@ test("current card summary combines the open Nubank cycle with commitments due n
   assert.equal(summary.cards.find((card) => card.id === "nubank-card").open_amount, 962.74);
   assert.equal(summary.cards.find((card) => card.id === "nubank-card").next_due_date, "2026-09-10");
   assert.equal(summary.cards.find((card) => card.id === "inter").open_amount, 62.6);
-  assert.deepEqual(summary.commitments, [{
-    id: "commitment-mercado livre",
-    name: "Mercado Livre",
-    amount: 659.87,
-    due_date: "2026-08-20",
-  }]);
+  const mercadoLivre = summary.commitments.find((item) => item.id === "commitment-mercado livre");
+  assert.equal(mercadoLivre.current_statement.amount, 659.87);
+  assert.equal(mercadoLivre.current_statement.due_date, "2026-08-20");
+});
+
+test("reconcilia Mercado Pago com Mercado Livre e consolida parcelas do cartao manual", () => {
+  const accounts = [{
+    id: "inter",
+    name: "Banco Inter",
+    institution_name: "Banco Inter",
+    account_type: "payment",
+    statement_due_day: 25,
+  }];
+  const transactions = [{
+    conta_financeira_id: "inter",
+    data: "2026-08-14",
+    valor: -659.94,
+    descricao: "Mercado Pago Instituicao de Pagamento Ltda - Pix enviado",
+    tipo_conta: "payment",
+  }];
+  const plans = [
+    {
+      financial_account_id: null,
+      merchant_name: "Mercado Livre",
+      description: "Mercado Livre",
+      installment_plan_items: [
+        { due_date: "2026-08-20", amount: 659.87, status_code: "scheduled" },
+        { due_date: "2026-09-20", amount: 561.9, status_code: "scheduled" },
+      ],
+    },
+    {
+      financial_account_id: "inter",
+      merchant_name: "FlexPag(CPFL)",
+      description: "FlexPag(CPFL)",
+      installment_plan_items: [{ due_date: "2026-08-25", amount: 62.6, status_code: "scheduled" }],
+    },
+    {
+      financial_account_id: "inter",
+      merchant_name: "pix_appTV",
+      description: "pix_appTV",
+      installment_plan_items: [{ due_date: "2026-08-25", amount: 36.33, status_code: "scheduled" }],
+    },
+  ];
+
+  const summary = buildCurrentCardSummary(accounts, transactions, plans, new Date("2026-08-17T12:00:00Z"));
+  const interCard = summary.cards.find((card) => card.id === "inter");
+  const mercadoLivre = summary.commitments.find((item) => item.id === "commitment-mercado livre");
+
+  assert.equal(interCard.current_statement.open_amount, 98.93);
+  assert.equal(summary.commitments.some((item) => item.name === "pix_appTV"), false);
+  assert.equal(mercadoLivre.current_statement.billing_status, "paid");
+  assert.equal(mercadoLivre.current_statement.payment_amount, 659.94);
+  assert.equal(mercadoLivre.next_statement.billing_status, "pending");
+  assert.equal(mercadoLivre.next_statement.amount, 561.9);
 });
 
 test("derives card competence from the month before statement closing", () => {

@@ -345,6 +345,55 @@ function buildSafeMonthDate(baseDate, monthOffset) {
   return new Date(Date.UTC(targetMonthStart.getUTCFullYear(), targetMonthStart.getUTCMonth(), day));
 }
 
+function amountsReconcile(expectedAmount, transactionAmount, tolerance = 0.1) {
+  return Math.abs(Math.abs(Number(transactionAmount ?? 0)) - Math.abs(Number(expectedAmount ?? 0))) <= tolerance;
+}
+
+function merchantFamilyKey(value) {
+  const normalized = normalizeText(value);
+  if (/mercado\s+(?:livre|pago)/.test(normalized)) return "mercado";
+  if (/nubank|nu\s+pagamentos/.test(normalized)) return "nubank";
+  if (/banco\s+inter|cartao\s+inter/.test(normalized)) return "inter";
+  return normalizeSupplierName(normalized);
+}
+
+function findCommitmentPayment(transactions, commitmentName, amount, dueDate) {
+  const dueMonth = String(dueDate || "").slice(0, 7);
+  const familyKey = merchantFamilyKey(commitmentName);
+  if (!dueMonth || !familyKey || Number(amount) <= 0) return null;
+
+  return transactions.find((transaction) => {
+    const transactionMonth = String(transaction.occurred_on || transaction.data || "").slice(0, 7);
+    return transactionMonth === dueMonth
+      && Number(transaction.valor ?? transaction.amount ?? 0) < 0
+      && merchantFamilyKey(transaction.descricao || transaction.original_description) === familyKey
+      && amountsReconcile(amount, transaction.valor ?? transaction.amount);
+  }) ?? null;
+}
+
+function findCardPayment(transactions, card, amount, dueDate) {
+  const dueMonth = String(dueDate || "").slice(0, 7);
+  if (!dueMonth || Number(amount) <= 0) return null;
+  const cardText = normalizeText(`${card.name} ${card.institution_name}`);
+
+  return transactions.find((transaction) => {
+    if (transaction.conta_financeira_id !== card.id) return false;
+    const transactionMonth = String(transaction.occurred_on || transaction.data || "").slice(0, 7);
+    if (transactionMonth !== dueMonth) return false;
+    const description = normalizeText(transaction.descricao || transaction.original_description);
+    const value = Number(transaction.valor ?? transaction.amount ?? 0);
+
+    if (card.is_manual_card) {
+      return value < 0
+        && /fatura|cartao/.test(description)
+        && (!/inter/.test(cardText) || /inter/.test(description))
+        && amountsReconcile(amount, value);
+    }
+
+    return value > 0 && /pagamento/.test(description) && amountsReconcile(amount, value);
+  }) ?? null;
+}
+
 function buildCardSummary(accounts, transactions, competence, installmentPlans = []) {
   const cards = accounts.filter((account) => account.account_type === "credit_card");
   const cardAccountIds = new Set(cards.map((account) => account.id));
@@ -362,12 +411,13 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
     account_type: "credit_card",
     is_manual_card: true,
   }))];
+  const manualCardAccountIds = new Set(manualCardAccounts.map((account) => account.id));
 
   const commitmentMap = new Map();
   installmentPlans.forEach((plan) => {
     const label = plan.merchant_name || plan.description || "Compromisso";
     const key = normalizeSupplierName(label);
-    if (/flexpag|cpfl/i.test(`${label} ${plan.description || ""}`)) return;
+    if (manualCardAccountIds.has(plan.financial_account_id)) return;
     const items = (plan.installment_plan_items ?? []).filter((item) => String(item.due_date || "").slice(0, 7) === competence
       && !["paid", "completed", "cancelled"].includes(String(item.status_code || "").toLowerCase()));
     if (!items.length) return;
@@ -382,12 +432,21 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
     current.due_dates.push(...items.map((item) => item.due_date).filter(Boolean));
     commitmentMap.set(key, current);
   });
-  const commitments = [...commitmentMap.values()].map((item) => ({
-    id: item.id,
-    name: item.name,
-    amount: Number(item.amount.toFixed(2)),
-    due_date: [...item.due_dates].sort()[0] ?? null,
-  }));
+  const commitments = [...commitmentMap.values()].map((item) => {
+    const amount = Number(item.amount.toFixed(2));
+    const dueDate = [...item.due_dates].sort()[0] ?? null;
+    const payment = findCommitmentPayment(transactions, item.name, amount, dueDate);
+    return {
+      id: item.id,
+      name: item.name,
+      amount,
+      due_date: dueDate,
+      billing_status: payment ? "paid" : "pending",
+      payment_date: payment?.occurred_on || payment?.data || null,
+      payment_amount: payment ? Math.abs(Number(payment.valor ?? payment.amount ?? 0)) : null,
+      competence,
+    };
+  });
 
   if (!summaryAccounts.length && !commitments.length) {
     return {
@@ -428,19 +487,26 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
     const utilized = card.credit_limit_amount ? Number(((currentLiability / card.credit_limit_amount) * 100).toFixed(1)) : null;
     const statementDueMonth = competence;
 
+    const dueDate = card.is_manual_card
+      ? manualCurrentItems[0]?.due_date ?? null
+      : card.statement_due_day && effectiveClosingDay && statementDueMonth
+        ? `${statementDueMonth}-${String(Math.min(Number(card.statement_due_day), 28)).padStart(2, "0")}`
+        : null;
+    const payment = findCardPayment(transactions, card, currentLiability, dueDate);
+
     return {
       id: card.id,
       name: card.name,
       open_amount: currentLiability,
       closed_amount: previousLiability,
       statement_amount: currentLiability,
-      next_due_date: card.is_manual_card
-        ? manualCurrentItems[0]?.due_date ?? null
-        : card.statement_due_day && effectiveClosingDay && statementDueMonth
-          ? `${statementDueMonth}-${String(Math.min(Number(card.statement_due_day), 28)).padStart(2, "0")}`
-          : null,
+      next_due_date: dueDate,
       credit_limit_amount: card.credit_limit_amount,
       utilized_limit_ratio: utilized,
+      billing_status: payment ? "paid" : "pending",
+      payment_date: payment?.occurred_on || payment?.data || null,
+      payment_amount: payment ? Math.abs(Number(payment.valor ?? payment.amount ?? 0)) : null,
+      competence,
     };
   });
 
@@ -466,9 +532,27 @@ function buildCurrentCardSummary(accounts, transactions, installmentPlans = [], 
     .filter((account) => account.account_type === "credit_card")
     .map((account) => account.id));
   const nextCardsById = new Map(nextSummary.cards.map((card) => [card.id, card]));
-  const cards = currentSummary.cards.map((card) => (
-    importedCardIds.has(card.id) ? nextCardsById.get(card.id) ?? card : card
-  ));
+  const cards = currentSummary.cards.map((currentCard) => {
+    const nextCard = nextCardsById.get(currentCard.id) ?? null;
+    const primaryCard = importedCardIds.has(currentCard.id) ? nextCard ?? currentCard : currentCard;
+    return {
+      ...primaryCard,
+      current_statement: currentCard,
+      next_statement: nextCard,
+    };
+  });
+  const currentCommitmentsById = new Map(currentSummary.commitments.map((item) => [item.id, item]));
+  const nextCommitmentsById = new Map(nextSummary.commitments.map((item) => [item.id, item]));
+  const commitmentIds = new Set([...currentCommitmentsById.keys(), ...nextCommitmentsById.keys()]);
+  const commitments = [...commitmentIds].map((id) => {
+    const currentCommitment = currentCommitmentsById.get(id) ?? null;
+    const nextCommitment = nextCommitmentsById.get(id) ?? null;
+    return {
+      ...(currentCommitment ?? nextCommitment),
+      current_statement: currentCommitment,
+      next_statement: nextCommitment,
+    };
+  });
 
   return {
     open_amount: roundCurrency(cards.reduce((sum, card) => sum + Number(card.open_amount ?? 0), 0)),
@@ -480,7 +564,7 @@ function buildCurrentCardSummary(accounts, transactions, installmentPlans = [], 
         / cards.filter((card) => card.utilized_limit_ratio != null).length)
       : null,
     cards,
-    commitments: currentSummary.commitments,
+    commitments,
     reference_competence: currentDueCompetence,
   };
 }
