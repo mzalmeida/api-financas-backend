@@ -202,6 +202,7 @@ O deploy publico no Render deve usar:
 ## Correcao operacional de categorizacao em lote
 
 - `PATCH /portal/movements` atualiza uma categoria para ate 500 movimentacoes pertencentes ao usuario autenticado.
+- `GET /portal/movements` e `GET /portal/suppliers` respeitam a competencia informada; a categorizacao de fornecedores usa a chave normalizada e o aprendizado do lote elimina padroes repetidos.
 - A categoria e todas as movimentacoes sao validadas antes da atualizacao coletiva.
 - A categorizacao manual e persistida antes do aprendizado automatico; uma falha ao aprender a regra nao desfaz nem bloqueia a alteracao solicitada.
 - Os indicadores mensais do dashboard consideram somente a competencia ativa e nao herdam filtros internos da tela de Movimentacoes.

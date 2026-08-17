@@ -4,6 +4,8 @@ require("dotenv").config({ quiet: true });
 
 const {
   accountTypeLabel,
+  applyTransactionFilters,
+  buildFilters,
   buildMonthlyTrend,
   buildRawMonthlyTrend,
   buildCardSummary,
@@ -27,6 +29,29 @@ test("normaliza a selecao em lote sem repetir movimentos", () => {
     "movement-2",
   ]);
   assert.deepEqual(normalizeMovementIds("movement-1"), []);
+});
+
+test("mantem a competencia ativa nos filtros de movimentacoes e fornecedores", () => {
+  assert.equal(buildFilters({ competence: "2026-08" }).competence, "2026-08");
+  assert.equal(buildFilters({ competence: "2026-08", allPeriod: "true" }).competence, null);
+
+  const rows = [
+    { id: "august", data_competencia: "2026-08-01", descricao: "Loja Exemplo" },
+    { id: "july", data_competencia: "2026-07-01", descricao: "Loja Exemplo" },
+  ];
+  assert.deepEqual(
+    applyTransactionFilters(rows, buildFilters({ competence: "2026-08" })).map((row) => row.id),
+    ["august"],
+  );
+});
+
+test("filtra fornecedor pela chave normalizada sem depender da pesquisa textual", () => {
+  const rows = [
+    { id: "match", data_competencia: "2026-08-01", descricao: "Shopee *Loja - Parcela 2/6" },
+    { id: "other", data_competencia: "2026-08-01", descricao: "Mercado Bairro" },
+  ];
+  const filters = buildFilters({ competence: "2026-08", supplierKey: "shopee *loja" });
+  assert.deepEqual(applyTransactionFilters(rows, filters).map((row) => row.id), ["match"]);
 });
 
 test("distribui arredondamento de parcelas preservando o valor total", () => {

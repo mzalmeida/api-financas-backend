@@ -1,5 +1,5 @@
 const { adminSupabaseClient } = require("../config/supabaseClients");
-const { learnClassificationRule } = require("./transactionClassificationService");
+const { learnedPatternFromDescription, learnClassificationRule } = require("./transactionClassificationService");
 
 class FinanceExperienceError extends Error {
   constructor(status, code, message, details = null) {
@@ -24,6 +24,7 @@ function normalizeSupplierName(value) {
     .replace(/\b(?:pix|debito|credito|compra|pgto|pagamento|transf|transferencia|transferência)\b/g, " ")
     .replace(/\bparcela\s+\d+\s*\/\s*\d+\b/g, " ")
     .replace(/\b\d{2,}\b/g, " ")
+    .replace(/\s*[-–—|]+\s*$/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   return text || "sem fornecedor";
@@ -813,7 +814,7 @@ async function listDuplicateMovements(client, authUserId, query = {}) {
 
 async function listSupplierInsights(client, authUserId, query = {}) {
   const appUser = await resolveCurrentAppUser(client, authUserId);
-  const filters = buildFilters({ ...query, allPeriod: "true" });
+  const filters = buildFilters(query);
   const [baseResult, accountsResult] = await Promise.all([
     client.from("vw_transacoes_base").select("*").order("data", { ascending: false }).limit(4000),
     client
@@ -1219,7 +1220,16 @@ async function updateMovementsCategory(client, authUserId, payload) {
   let learnedRules = 0;
   let learningFailures = 0;
   if (payload?.learnRule !== false) {
+    const uniqueRuleCandidates = new Map();
     for (const transaction of transactions) {
+      const description = transaction.normalized_description || transaction.original_description;
+      const pattern = learnedPatternFromDescription(description);
+      if (pattern.length >= 4 && !uniqueRuleCandidates.has(pattern)) {
+        uniqueRuleCandidates.set(pattern, transaction);
+      }
+    }
+
+    for (const transaction of uniqueRuleCandidates.values()) {
       try {
         const learned = await learnClassificationRule(client, appUser.id, {
           description: transaction.normalized_description || transaction.original_description,
@@ -1289,6 +1299,8 @@ async function updateDuplicateDecision(client, authUserId, movementId, payload) 
 module.exports = {
   FinanceExperienceError,
   accountTypeLabel,
+  applyTransactionFilters,
+  buildFilters,
   buildCardSummary,
   buildCurrentCardSummary,
   buildMonthlyTrend,
