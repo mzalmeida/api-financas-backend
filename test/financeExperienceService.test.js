@@ -45,6 +45,19 @@ test("mantem a competencia ativa nos filtros de movimentacoes e fornecedores", (
   );
 });
 
+test("filtra pelo tipo financeiro calculado em vez do tipo bruto do OFX", () => {
+  const rows = [
+    { id: "external-pix", tipo_movimento: "transfer", tipo_movimento_calculado: "expense" },
+    { id: "own-transfer", tipo_movimento: "transfer", tipo_movimento_calculado: "transfer" },
+    { id: "salary", tipo_movimento: "income", tipo_movimento_calculado: "income" },
+  ];
+
+  assert.deepEqual(
+    applyTransactionFilters(rows, buildFilters({ allPeriod: "true", movementType: "expense" })).map((row) => row.id),
+    ["external-pix"],
+  );
+});
+
 test("filtra fornecedor pela chave normalizada sem depender da pesquisa textual", () => {
   const rows = [
     { id: "match", data_competencia: "2026-08-01", descricao: "Shopee *Loja - Parcela 2/6" },

@@ -236,7 +236,8 @@ function applyTransactionFilters(rows, filters) {
     if (filters.category && normalizeText(row.categoria) !== normalizeText(filters.category)) {
       return false;
     }
-    if (filters.movementType && row.tipo_movimento !== filters.movementType) {
+    const effectiveMovementType = row.tipo_movimento_calculado || row.tipo_movimento;
+    if (filters.movementType && effectiveMovementType !== filters.movementType) {
       return false;
     }
     if (filters.duplicateOnly && !row.grupo_duplicidade && !row.hash_deduplicacao) {
@@ -831,13 +832,21 @@ async function listMovements(client, authUserId, query = {}) {
     .is("archived_at", null);
 
   const accounts = accountsResult.data ?? [];
-  const rows = applyTransactionFilters((data ?? []).map((row) => ({
-    ...row,
-    id: row.transacao_id,
-    tipo_conta: accounts.find((item) => item.id === row.conta_financeira_id)?.account_type ?? "other",
-    tipo_conta_label: accountTypeLabel(accounts.find((item) => item.id === row.conta_financeira_id)?.account_type ?? "other"),
-    conta_nome: accounts.find((item) => item.id === row.conta_financeira_id)?.name ?? row.origem_financeira ?? null,
-  })), filters);
+  const rows = applyTransactionFilters((data ?? []).map((row) => {
+    const account = accounts.find((item) => item.id === row.conta_financeira_id) ?? null;
+    const accountType = account?.account_type ?? "other";
+    const calculatedMovementType = classifyTransactionForTotals({ ...row, tipo_conta: accountType }, appUser);
+    return {
+      ...row,
+      id: row.transacao_id,
+      tipo_conta: accountType,
+      tipo_conta_label: accountTypeLabel(accountType),
+      conta_nome: account?.name ?? row.origem_financeira ?? null,
+      tipo_movimento_original: row.tipo_movimento,
+      tipo_movimento_calculado: calculatedMovementType,
+      tipo_movimento: calculatedMovementType,
+    };
+  }), filters);
 
   const total = rows.length;
   const from = (filters.page - 1) * filters.pageSize;
@@ -913,12 +922,20 @@ async function listSupplierInsights(client, authUserId, query = {}) {
   }
 
   const accounts = accountsResult.data ?? [];
-  const rows = (baseResult.data ?? []).map((row) => ({
-    ...row,
-    id: row.transacao_id,
-    tipo_conta: accounts.find((item) => item.id === row.conta_financeira_id)?.account_type ?? "other",
-    conta_nome: accounts.find((item) => item.id === row.conta_financeira_id)?.name ?? row.origem_financeira ?? null,
-  }));
+  const rows = (baseResult.data ?? []).map((row) => {
+    const account = accounts.find((item) => item.id === row.conta_financeira_id) ?? null;
+    const accountType = account?.account_type ?? "other";
+    const calculatedMovementType = classifyTransactionForTotals({ ...row, tipo_conta: accountType }, appUser);
+    return {
+      ...row,
+      id: row.transacao_id,
+      tipo_conta: accountType,
+      conta_nome: account?.name ?? row.origem_financeira ?? null,
+      tipo_movimento_original: row.tipo_movimento,
+      tipo_movimento_calculado: calculatedMovementType,
+      tipo_movimento: calculatedMovementType,
+    };
+  });
   const filtered = applyTransactionFilters(rows, filters);
   const items = buildSupplierInsights(filtered, appUser)
     .filter((item) => item.purchase_count > 1)
