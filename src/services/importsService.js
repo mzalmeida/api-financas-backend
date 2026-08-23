@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const path = require("path");
 const { adminSupabaseClient } = require("../config/supabaseClients");
 const { parseOfxBuffer, normalizeText, inferMovementType } = require("./ofxParser");
 const { applyClassificationRuleSet } = require("./transactionClassificationService");
@@ -320,13 +321,27 @@ function validateUploadedFile(file) {
     throw new ImportFlowError(400, "invalid_file", "Nenhum arquivo OFX foi enviado.");
   }
 
-  if (!file.originalname?.toLowerCase().endsWith(".ofx")) {
-    throw new ImportFlowError(400, "unsupported_format", "Apenas arquivos com extensao .ofx sao aceitos nesta etapa.");
+  const originalName = sanitizeUploadedFileName(file.originalname);
+  if (!originalName.toLowerCase().endsWith(".ofx")) {
+    throw new ImportFlowError(400, "invalid_file", "Arquivo OFX invalido.");
   }
 
   if (!file.buffer || file.size <= 0) {
-    throw new ImportFlowError(400, "invalid_file", "O arquivo enviado esta vazio.");
+    throw new ImportFlowError(400, "invalid_file", "Arquivo OFX invalido.");
   }
+
+  const contentSample = file.buffer.subarray(0, Math.min(file.buffer.length, 64 * 1024)).toString("latin1");
+  if (/\0/.test(contentSample) || !/<OFX(?:\s|>)/i.test(contentSample) || !/<STMTTRN(?:\s|>)/i.test(contentSample)) {
+    throw new ImportFlowError(400, "invalid_file", "Arquivo OFX invalido.");
+  }
+
+  file.originalname = originalName;
+}
+
+function sanitizeUploadedFileName(value) {
+  const normalized = String(value || "arquivo.ofx").replace(/\\/g, "/");
+  const baseName = path.posix.basename(normalized).replace(/[\u0000-\u001f\u007f]/g, "").trim();
+  return (baseName || "arquivo.ofx").slice(-180);
 }
 
 async function findExistingFileImports(client, appUserId, accountId, fileHash) {
@@ -1154,6 +1169,8 @@ module.exports = {
   ImportFlowError,
   buildDuplicateGroupKey,
   statementCompetenceFromProcessingSummary,
+  sanitizeUploadedFileName,
+  validateUploadedFile,
   listImportOptions,
   createFinancialAccount,
   previewOfxImport,

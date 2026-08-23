@@ -21,6 +21,24 @@ const upload = multer({
   limits: {
     fileSize: 5 * 1024 * 1024,
     files: 1,
+    fields: 10,
+  },
+  fileFilter(req, file, callback) {
+    const hasOfxExtension = typeof file.originalname === "string" && file.originalname.toLowerCase().endsWith(".ofx");
+    const allowedMimeTypes = new Set([
+      "application/octet-stream",
+      "application/ofx",
+      "application/x-ofx",
+      "application/vnd.intu.qfx",
+      "application/xml",
+      "text/plain",
+      "text/xml",
+    ]);
+    const mimeType = String(file.mimetype || "application/octet-stream").toLowerCase();
+    if (!hasOfxExtension || !allowedMimeTypes.has(mimeType)) {
+      return callback(new ImportFlowError(400, "invalid_file", "Arquivo OFX invalido."));
+    }
+    return callback(null, true);
   },
 });
 
@@ -46,7 +64,6 @@ function sendKnownError(res, error) {
     return res.status(error.status).json({
       erro: error.message,
       codigo: error.code,
-      detalhes: error.details ?? undefined,
     });
   }
 

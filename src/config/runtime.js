@@ -4,6 +4,7 @@ const LOCAL_FRONTEND_ORIGINS = [
   "http://localhost:8080",
   "http://127.0.0.1:8080",
 ];
+const isProduction = process.env.NODE_ENV === "production";
 
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
@@ -17,11 +18,14 @@ function parseCommaSeparated(value) {
     .filter(Boolean);
 }
 
-const allowedOrigins = unique([
+const configuredOrigins = unique([
   process.env.FRONTEND_URL,
   "https://api-financas-frontend.onrender.com",
-  ...LOCAL_FRONTEND_ORIGINS,
   ...parseCommaSeparated(process.env.ADDITIONAL_FRONTEND_ORIGINS),
+]);
+const allowedOrigins = unique([
+  ...configuredOrigins.filter((origin) => !isProduction || !/^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(origin)),
+  ...(isProduction ? [] : LOCAL_FRONTEND_ORIGINS),
 ]);
 
 function parseBooleanFlag(value) {
@@ -39,5 +43,6 @@ module.exports = {
   allowedOrigins,
   gmailIntegrationEnabled,
   gmailIntegrationMode,
+  isProduction,
   isOriginAllowed,
 };

@@ -24,6 +24,7 @@ const {
   updateInstallmentPlan,
   updateMovement,
   updateMovementsCategory,
+  identifyMovementsSupplier,
   updateDuplicateDecision,
 } = require("../services/financeExperienceService");
 
@@ -73,6 +74,11 @@ router.get("/overview", requireSupabaseAuth, async (req, res) => run(res, async 
 router.get("/movements", requireSupabaseAuth, async (req, res) => run(res, async () => {
   const data = await listMovements(buildClient(req), req.user.authUserId, req.query);
   res.json({ status: "ok", ...data });
+}));
+
+router.patch("/movements/supplier", requireSupabaseAuth, async (req, res) => run(res, async () => {
+  const result = await identifyMovementsSupplier(buildClient(req), req.user.authUserId, req.body);
+  res.json({ status: "ok", ...result });
 }));
 
 router.patch("/movements/:id", requireSupabaseAuth, async (req, res) => run(res, async () => {

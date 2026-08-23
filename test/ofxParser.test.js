@@ -42,7 +42,23 @@ test("parseia OFX do Inter com TRNTYPE de transferencia", () => {
 });
 
 test("prioriza FID e BANKID do Inter sobre textos de transacao que mencionam Nu Pagamentos", () => {
-  const file = fs.readFileSync(path.join("C:/Users/mateu/Downloads", "Extrato-12-07-2026-a-12-08-2026-OFX.ofx"));
+  const file = Buffer.from(`OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:UTF-8
+CHARSET:NONE
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+
+<OFX>
+<SIGNONMSGSRSV1><SONRS><FI><ORG>BANCO INTER<FID>077</FI></SONRS></SIGNONMSGSRSV1>
+<BANKMSGSRSV1><STMTTRNRS><STMTRS><BANKACCTFROM><BANKID>077<ACCTID>synthetic-inter</BANKACCTFROM>
+<BANKTRANLIST><DTSTART>20260801000000<DTEND>20260801235959
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20260801120000<TRNAMT>-10.00<FITID>synthetic-001<MEMO>Transferencia para Nu Pagamentos</STMTTRN>
+</BANKTRANLIST><LEDGERBAL><BALAMT>100.00<DTASOF>20260801235959</LEDGERBAL></STMTRS></STMTTRNRS></BANKMSGSRSV1>
+</OFX>`, "utf8");
   const result = parseOfxBuffer(file, institutions);
 
   assert.equal(result.detection.slug, "inter");

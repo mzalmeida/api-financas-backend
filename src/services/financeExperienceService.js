@@ -976,7 +976,7 @@ async function ensureCounterparty(client, appUserId, payload) {
     .single();
 
   if (error || !data) {
-    throw new FinanceExperienceError(502, "supabase_insert_error", "Falha ao criar o fornecedor do parcelamento.");
+    throw new FinanceExperienceError(502, "supabase_insert_error", "Falha ao criar o fornecedor.");
   }
 
   return data.id;
@@ -1351,6 +1351,87 @@ async function updateMovementsCategory(client, authUserId, payload) {
   };
 }
 
+async function identifyMovementsSupplier(client, authUserId, payload) {
+  const appUser = await resolveCurrentAppUser(client, authUserId);
+  const movementIds = normalizeMovementIds(payload?.movementIds);
+  const supplierName = optionalText(payload?.supplierName)?.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+  const categoryId = optionalText(payload?.categoryId);
+
+  if (!movementIds.length || !supplierName) {
+    throw new FinanceExperienceError(400, "validation_error", "Informe as movimentacoes e o nome amigavel do fornecedor.");
+  }
+  if (movementIds.length > 500) {
+    throw new FinanceExperienceError(400, "batch_too_large", "Selecione no maximo 500 movimentacoes por vez.");
+  }
+  if (supplierName.length < 2 || supplierName.length > 160) {
+    throw new FinanceExperienceError(400, "validation_error", "O nome amigavel deve ter entre 2 e 160 caracteres.");
+  }
+
+  if (categoryId) await ensureOwnedCategory(client, appUser.id, categoryId);
+  const { data: transactions, error: queryError } = await client
+    .from("transactions")
+    .select("id,original_description,normalized_description,movement_type,category_id")
+    .eq("user_id", appUser.id)
+    .in("id", movementIds);
+
+  if (queryError) {
+    throw new FinanceExperienceError(502, "supabase_query_error", "Falha ao localizar as movimentacoes selecionadas.");
+  }
+  if ((transactions ?? []).length !== movementIds.length) {
+    throw new FinanceExperienceError(404, "transaction_not_found", "Uma ou mais movimentacoes selecionadas nao foram localizadas.");
+  }
+
+  const counterpartyId = await ensureCounterparty(client, appUser.id, { supplierName });
+  if (!counterpartyId) {
+    throw new FinanceExperienceError(502, "supabase_write_error", "Falha ao registrar o nome amigavel do fornecedor.");
+  }
+
+  const patch = { counterparty_id: counterpartyId };
+  if (categoryId) patch.category_id = categoryId;
+  const { data: updated, error: updateError } = await client
+    .from("transactions")
+    .update(patch)
+    .eq("user_id", appUser.id)
+    .in("id", movementIds)
+    .select("id,category_id,counterparty_id,updated_at");
+
+  if (updateError || (updated ?? []).length !== movementIds.length) {
+    throw new FinanceExperienceError(502, "supabase_update_error", "Falha ao identificar todas as movimentacoes selecionadas.");
+  }
+
+  let learnedRules = 0;
+  let learningFailures = 0;
+  const uniqueRuleCandidates = new Map();
+  for (const transaction of transactions) {
+    const description = transaction.normalized_description || transaction.original_description;
+    const pattern = learnedPatternFromDescription(description);
+    if (pattern.length >= 4 && !uniqueRuleCandidates.has(pattern)) {
+      uniqueRuleCandidates.set(pattern, transaction);
+    }
+  }
+
+  for (const transaction of uniqueRuleCandidates.values()) {
+    try {
+      const learned = await learnClassificationRule(client, appUser.id, {
+        description: transaction.normalized_description || transaction.original_description,
+        movementType: transaction.movement_type,
+      }, categoryId || transaction.category_id, counterpartyId);
+      if (learned) learnedRules += 1;
+    } catch {
+      learningFailures += 1;
+    }
+  }
+
+  return {
+    items: updated,
+    updated_count: updated.length,
+    supplier_name: supplierName,
+    counterparty_id: counterpartyId,
+    learned_rules: learnedRules,
+    learning_failures: learningFailures,
+  };
+}
+
 async function updateDuplicateDecision(client, authUserId, movementId, payload) {
   const appUser = await resolveCurrentAppUser(client, authUserId);
   const decision = optionalText(payload?.decision);
@@ -1424,5 +1505,6 @@ module.exports = {
   updateInstallmentPlan,
   updateMovement,
   updateMovementsCategory,
+  identifyMovementsSupplier,
   updateDuplicateDecision,
 };

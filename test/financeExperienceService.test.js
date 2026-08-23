@@ -19,7 +19,7 @@ const {
   summarizeTransactionTotals,
 } = require("../src/services/financeExperienceService");
 const { buildDuplicateGroupKey, statementCompetenceFromProcessingSummary } = require("../src/services/importsService");
-const { learnedPatternFromDescription, matchRule } = require("../src/services/transactionClassificationService");
+const { learnedPatternFromDescription, learnClassificationRule, matchRule } = require("../src/services/transactionClassificationService");
 
 const appUser = { display_name: "Mateus Zilio de Almeida", email: "mateus@example.com" };
 
@@ -111,6 +111,35 @@ test("regra aprendida ignora numero da parcela e reconhece a proxima compra", ()
   }, {
     description: "SHOPEE *LOJA EXEMPLO - Parcela 4/10",
   }), true);
+});
+
+test("regra aprendida pode identificar fornecedor sem remover categoria existente", async () => {
+  let insertedPayload = null;
+  const query = {
+    select() { return this; },
+    eq() { return this; },
+    is() { return this; },
+    limit() { return this; },
+    async maybeSingle() { return { data: null, error: null }; },
+    insert(payload) { insertedPayload = payload; return this; },
+    async single() {
+      return {
+        data: { id: "rule-1", category_id: null, counterparty_id: insertedPayload.counterparty_id, pattern_text: insertedPayload.pattern_text },
+        error: null,
+      };
+    },
+  };
+  const client = { from: () => query };
+
+  const learned = await learnClassificationRule(client, "user-1", {
+    description: "ArleteFerreira - parcela 2/4",
+    movementType: "expense",
+  }, null, "counterparty-1");
+
+  assert.equal(insertedPayload.counterparty_id, "counterparty-1");
+  assert.equal(Object.hasOwn(insertedPayload, "category_id"), false);
+  assert.equal(learned.counterparty_id, "counterparty-1");
+  assert.equal(learned.pattern_text, "arleteferreira");
 });
 
 test("classifies only transfers to the account owner as internal", () => {

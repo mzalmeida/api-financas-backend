@@ -1,14 +1,24 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 
 const healthRoutes = require("./routes/health");
 const authRoutes = require("./routes/auth");
 const gastosRoutes = require("./routes/gastos");
 const importsRoutes = require("./routes/imports");
 const portalRoutes = require("./routes/portal");
-const { allowedOrigins, gmailIntegrationEnabled, isOriginAllowed } = require("./config/runtime");
+const { gmailIntegrationEnabled, isOriginAllowed } = require("./config/runtime");
 
 const app = express();
+
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
 
 app.use(cors({
   origin(origin, callback) {
@@ -21,7 +31,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: "256kb" }));
 
 app.get("/", (req, res) => {
   res.json({ status: "RebeccaCash API online" });
@@ -31,7 +41,6 @@ app.get("/auth", (req, res) => {
   res.json({
     status: "ok",
     auth_provider: "supabase",
-    allowed_origins: allowedOrigins,
   });
 });
 
@@ -55,6 +64,13 @@ app.use((req, res) => {
 });
 
 app.use((error, req, res, next) => {
+  if (error?.type === "entity.too.large") {
+    return res.status(413).json({
+      erro: "Conteudo enviado excede o limite permitido",
+      codigo: "payload_too_large",
+    });
+  }
+
   if (error?.message === "Origin not allowed by CORS") {
     return res.status(403).json({
       erro: "Origem nao permitida",

@@ -167,9 +167,9 @@ async function applyClassificationRuleSet(client, appUserId, transaction) {
   };
 }
 
-async function learnClassificationRule(client, appUserId, transaction, categoryId) {
+async function learnClassificationRule(client, appUserId, transaction, categoryId, counterpartyId = null) {
   const patternText = learnedPatternFromDescription(transaction.description);
-  if (!categoryId || patternText.length < 4) return null;
+  if ((!categoryId && !counterpartyId) || patternText.length < 4) return null;
 
   const { data: existing, error: existingError } = await client
     .from("transaction_classification_rules")
@@ -185,7 +185,6 @@ async function learnClassificationRule(client, appUserId, transaction, categoryI
   if (existingError) throw existingError;
 
   const payload = {
-    category_id: categoryId,
     rule_name: `Aprendida: ${patternText}`.slice(0, 120),
     pattern_text: patternText,
     priority: 50,
@@ -194,6 +193,8 @@ async function learnClassificationRule(client, appUserId, transaction, categoryI
     is_active: true,
     archived_at: null,
   };
+  if (categoryId) payload.category_id = categoryId;
+  if (counterpartyId) payload.counterparty_id = counterpartyId;
 
   if (existing?.id) {
     const { data, error } = await client
@@ -201,7 +202,7 @@ async function learnClassificationRule(client, appUserId, transaction, categoryI
       .update(payload)
       .eq("id", existing.id)
       .eq("user_id", appUserId)
-      .select("id,category_id,pattern_text")
+      .select("id,category_id,counterparty_id,pattern_text")
       .single();
     if (error) throw error;
     return data;
@@ -215,7 +216,7 @@ async function learnClassificationRule(client, appUserId, transaction, categoryI
       match_operator: "contains",
       ...payload,
     })
-    .select("id,category_id,pattern_text")
+    .select("id,category_id,counterparty_id,pattern_text")
     .single();
   if (error) throw error;
   return data;

@@ -79,6 +79,24 @@ Backend Node.js/Express responsavel por autenticar contra o Supabase Auth, valid
 - a documentacao runtime historica da F03-E01 foi higienizada com `access_token` e `refresh_token` substituidos por `[REDACTED]`;
 - a validacao autenticada publicada de 2026-08-04 confirmou dashboard real, `Revisoes` publicado, `Fornecedores` publicado e separacao entre saldo disponivel e cartao de credito.
 
+## Hardening local de seguranca
+
+- Helmet protege os headers da API sem aplicar CSP inadequada ao backend REST;
+- login e refresh possuem limites independentes de tentativas;
+- JSON e limitado a 256 KB e o upload OFX permanece em memoria, limitado a um arquivo de 5 MB;
+- o upload valida extensao, MIME, assinatura estrutural OFX e nome de arquivo sanitizado;
+- CORS de producao aceita somente a origem oficial configurada, sem localhost;
+- `/health` e `/auth` nao publicam versao, estado de infraestrutura ou lista de origens;
+- logs locais e arquivos `.log` estao ignorados pelo Git;
+- a auditoria de RLS esta em `docs/security/rls_authorization_audit.md`.
+
+## Identificacao aprendida de fornecedores
+
+- `PATCH /portal/movements/supplier` vincula ate 500 movimentacoes do usuario a um nome amigavel;
+- o endpoint valida ownership de movimentacoes, categoria e contraparte antes da escrita;
+- a identificacao grava regras de classificacao pelo texto original, permitindo reconhecer fornecedor e categoria em importacoes futuras;
+- a regra pode aprender somente o fornecedor sem apagar uma categoria ja existente.
+
 ## Variaveis de ambiente
 
 - `NODE_ENV`

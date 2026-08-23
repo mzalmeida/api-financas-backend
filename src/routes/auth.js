@@ -1,6 +1,7 @@
 const express = require("express");
 
 const requireSupabaseAuth = require("../middlewares/requireSupabaseAuth");
+const { loginRateLimit, refreshRateLimit } = require("../middlewares/authRateLimits");
 const { createSupabaseAuthClient, createSupabaseUserClient } = require("../config/supabaseClients");
 
 const router = express.Router();
@@ -29,7 +30,7 @@ function sanitizeSession(session) {
   };
 }
 
-router.post("/login", async (req, res) => {
+router.post("/login", loginRateLimit, async (req, res) => {
   const { usuario, senha } = req.body;
   const email = normalizeIdentifier(usuario);
 
@@ -69,7 +70,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/refresh", async (req, res) => {
+router.post("/refresh", refreshRateLimit, async (req, res) => {
   const refreshToken = typeof req.body?.refreshToken === "string" ? req.body.refreshToken.trim() : "";
   if (!refreshToken) {
     return res.status(400).json({ erro: "Refresh token nao informado", codigo: "missing_refresh_token" });
