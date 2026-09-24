@@ -62,7 +62,8 @@ function classifyTransactionForTotals(row, appUser) {
 
   if (!amount) return "adjustment";
 
-  const isCardPayment = /pagamento recebido|pagamento (?:da )?fatura|debito automatico.*fatura|pagamento.*cartao/.test(description);
+  const isCardPayment = /pagamento recebido|pagamento (?:da )?fatura|debito automatico.*fatura|pagamento.*cartao/.test(description)
+    || (/pagamento efetuado/.test(description) && /nubank|nu pagamentos/.test(description));
   if (isCardPayment) return "transfer";
 
   const isPixOrTransfer = /\bpix\b|transfer/.test(description);
@@ -378,20 +379,30 @@ function findCardPayment(transactions, card, amount, dueDate) {
   const cardText = normalizeText(`${card.name} ${card.institution_name}`);
 
   return transactions.find((transaction) => {
-    if (transaction.conta_financeira_id !== card.id) return false;
     const transactionMonth = String(transaction.occurred_on || transaction.data || "").slice(0, 7);
     if (transactionMonth !== dueMonth) return false;
     const description = normalizeText(transaction.descricao || transaction.original_description);
     const value = Number(transaction.valor ?? transaction.amount ?? 0);
+    const isCardAccountTransaction = transaction.conta_financeira_id === card.id;
 
     if (card.is_manual_card) {
-      return value < 0
+      return isCardAccountTransaction
+        && value < 0
         && /fatura|cartao/.test(description)
         && (!/inter/.test(cardText) || /inter/.test(description))
         && amountsReconcile(amount, value);
     }
 
-    return value > 0 && /pagamento/.test(description) && amountsReconcile(amount, value);
+    if (isCardAccountTransaction) {
+      return value > 0 && /pagamento/.test(description) && amountsReconcile(amount, value);
+    }
+
+    const accountType = transaction.tipo_conta ?? transaction.account_type;
+    return accountType !== "credit_card"
+      && value < 0
+      && merchantFamilyKey(description) === merchantFamilyKey(cardText)
+      && /pagamento|pix|transfer/.test(description)
+      && amountsReconcile(amount, value);
   }) ?? null;
 }
 

@@ -158,6 +158,15 @@ test("does not count card payments as income or expense", () => {
   assert.deepEqual(summarizeTransactionTotals(rows, appUser), { income: 0, expense: 100 });
 });
 
+test("recognizes a Nubank bill payment recorded in the Inter statement", () => {
+  const rows = [
+    { valor: -1306.12, descricao: 'NU PAGAMENTOS SA - Pagamento efetuado: "NU PAGAMENTOS SA"', tipo_conta: "payment" },
+    { valor: -250, descricao: 'Pagamento efetuado: "TARRAF ADMINISTRADORA DE CONSORCIOS LTDA"', tipo_conta: "payment" },
+  ];
+
+  assert.deepEqual(summarizeTransactionTotals(rows, appUser), { income: 0, expense: 250 });
+});
+
 test("card credits reduce expenses without becoming income", () => {
   const rows = [
     { valor: -300, descricao: "Compra", tipo_conta: "credit_card" },
@@ -357,6 +366,34 @@ test("reconcilia Mercado Pago com Mercado Livre e consolida parcelas do cartao m
   assert.equal(mercadoLivre.current_statement.payment_amount, 659.94);
   assert.equal(mercadoLivre.next_statement.billing_status, "pending");
   assert.equal(mercadoLivre.next_statement.amount, 561.9);
+});
+
+test("reconciles a Nubank statement paid from the Inter account", () => {
+  const accounts = [
+    {
+      id: "nubank-card",
+      name: "Nubank Credito",
+      institution_name: "Nubank",
+      account_type: "credit_card",
+      statement_closing_day: 3,
+      statement_due_day: 10,
+    },
+    {
+      id: "inter",
+      name: "Banco Inter",
+      institution_name: "Banco Inter",
+      account_type: "payment",
+    },
+  ];
+  const transactions = [
+    { conta_financeira_id: "nubank-card", data_competencia: "2026-07-01", data: "2026-07-15", valor: -1306.12, tipo_conta: "credit_card", descricao: "Compras da fatura" },
+    { conta_financeira_id: "inter", data: "2026-08-06", valor: -1306.12, tipo_conta: "payment", descricao: 'NU PAGAMENTOS SA - Pagamento efetuado: "NU PAGAMENTOS SA"' },
+  ];
+
+  const summary = buildCardSummary(accounts, transactions, "2026-08");
+  assert.equal(summary.cards[0].billing_status, "paid");
+  assert.equal(summary.cards[0].payment_date, "2026-08-06");
+  assert.equal(summary.cards[0].payment_amount, 1306.12);
 });
 
 test("derives card competence from the month before statement closing", () => {
