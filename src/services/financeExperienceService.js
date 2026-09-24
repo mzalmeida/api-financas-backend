@@ -394,7 +394,9 @@ function findCardPayment(transactions, card, amount, dueDate) {
     }
 
     if (isCardAccountTransaction) {
-      return value > 0 && /pagamento/.test(description) && amountsReconcile(amount, value);
+      // The card issuer's own OFX entry is authoritative. The locally computed
+      // statement can differ when the imported cycle has late or excluded rows.
+      return value > 0 && /pagamento recebido|pagamento (?:da )?fatura/.test(description);
     }
 
     const accountType = transaction.tipo_conta ?? transaction.account_type;

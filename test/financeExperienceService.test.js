@@ -396,6 +396,26 @@ test("reconciles a Nubank statement paid from the Inter account", () => {
   assert.equal(summary.cards[0].payment_amount, 1306.12);
 });
 
+test("uses the card issuer payment entry when the calculated statement diverges", () => {
+  const accounts = [{
+    id: "nubank-card",
+    name: "Nubank Credito",
+    institution_name: "Nubank",
+    account_type: "credit_card",
+    statement_closing_day: 3,
+    statement_due_day: 10,
+  }];
+  const transactions = [
+    { conta_financeira_id: "nubank-card", data_competencia: "2026-08-01", data: "2026-08-20", valor: -1364.9, tipo_conta: "credit_card", descricao: "Compras importadas" },
+    { conta_financeira_id: "nubank-card", data_competencia: "2026-09-01", data: "2026-09-08", valor: 1185.46, tipo_conta: "credit_card", descricao: "Pagamento recebido" },
+  ];
+
+  const summary = buildCardSummary(accounts, transactions, "2026-09");
+  assert.equal(summary.cards[0].billing_status, "paid");
+  assert.equal(summary.cards[0].payment_date, "2026-09-08");
+  assert.equal(summary.cards[0].payment_amount, 1185.46);
+});
+
 test("derives card competence from the month before statement closing", () => {
   assert.equal(statementCompetenceFromProcessingSummary({
     statement_kind: "credit_card",
