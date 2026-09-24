@@ -331,6 +331,12 @@ test("reconcilia Mercado Pago com Mercado Livre e consolida parcelas do cartao m
     valor: -659.94,
     descricao: "Mercado Pago Instituicao de Pagamento Ltda - Pix enviado",
     tipo_conta: "payment",
+  }, {
+    conta_financeira_id: "inter",
+    data: "2026-08-15",
+    valor: -173.78,
+    descricao: 'Pagamento Fatura - Pagamento efetuado: "Pagamento fatura cartao Inter"',
+    tipo_conta: "payment",
   }];
   const plans = [
     {
@@ -361,6 +367,8 @@ test("reconcilia Mercado Pago com Mercado Livre e consolida parcelas do cartao m
   const mercadoLivre = summary.commitments.find((item) => item.id === "commitment-mercado livre");
 
   assert.equal(interCard.current_statement.open_amount, 98.93);
+  assert.equal(interCard.current_statement.billing_status, "paid");
+  assert.equal(interCard.current_statement.payment_amount, 173.78);
   assert.equal(summary.commitments.some((item) => item.name === "pix_appTV"), false);
   assert.equal(mercadoLivre.current_statement.billing_status, "paid");
   assert.equal(mercadoLivre.current_statement.payment_amount, 659.94);

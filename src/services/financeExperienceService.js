@@ -389,8 +389,7 @@ function findCardPayment(transactions, card, amount, dueDate) {
       return isCardAccountTransaction
         && value < 0
         && /fatura|cartao/.test(description)
-        && (!/inter/.test(cardText) || /inter/.test(description))
-        && amountsReconcile(amount, value);
+        && (!/inter/.test(cardText) || /inter/.test(description));
     }
 
     if (isCardAccountTransaction) {
@@ -520,6 +519,7 @@ function buildCardSummary(accounts, transactions, competence, installmentPlans =
       billing_status: payment ? "paid" : "pending",
       payment_date: payment?.occurred_on || payment?.data || null,
       payment_amount: payment ? Math.abs(Number(payment.valor ?? payment.amount ?? 0)) : null,
+      is_manual_card: Boolean(card.is_manual_card),
       competence,
     };
   });
