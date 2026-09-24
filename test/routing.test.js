@@ -191,6 +191,8 @@ test("GET /health retorna 200", async () => {
     const { response, body } = await request(app, "/health");
     assert.equal(response.status, 200);
     assert.equal(body.status, "ok");
+    assert.equal(typeof body.revision, "string");
+    assert.ok(body.revision.length > 0 && body.revision.length <= 7);
   } finally {
     cleanup();
   }
